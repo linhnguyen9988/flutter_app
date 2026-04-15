@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "269671811347",
+    "project_id": "vaiaodaigiabao",
+    "storage_bucket": "vaiaodaigiabao.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:269671811347:android:bff8ff190f266b275572e6",
+        "android_client_info": {
+          "package_name": "com.tonylinh.AoDaiGiaBao"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB_ViOnFnCjNnkeq3ptODmfdJu3k2Sbd3M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
