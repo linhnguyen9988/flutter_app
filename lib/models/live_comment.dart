@@ -14,16 +14,15 @@ class LiveComment {
   final String? pageid;
   final int? luotchot;
   final int? slchot;
-  final String? avatarUrl; // từ socket emit (có link đầy đủ)
-  final String?
-      customerLabel; // label từ bảng khachhang: Bom hàng, Xả hàng, Có vấn đề
-  final String? customerPhone; // phone từ bảng khachhang
-  final String? nuocngoai; // 'Nước ngoài' nếu khách ở nước ngoài
-  final int? khid; // id (cột tự tăng) trong bảng khachhang — dùng cho barcode
-  final String? diachi; // địa chỉ khách (data[10])
-  final String? note; // ghi chú live (data[19])
-  final String? region; // nuocngoai dạng text (data[23])
-  final String? fbnamex; // fbname từ bảng (data[15])
+  final String? avatarUrl;
+  final String? customerLabel;
+  final String? customerPhone;
+  final String? nuocngoai;
+  final int? khid;
+  final String? diachi;
+  final String? note;
+  final String? region;
+  final String? fbnamex;
 
   LiveComment({
     required this.idx,
@@ -79,7 +78,6 @@ class LiveComment {
         fbnamex: j['fbnamex'],
       );
 
-  // Tạo từ socket emit — data dạng newCommentData từ webhook
   factory LiveComment.fromSocket(Map<String, dynamic> d) => LiveComment(
         idx: d['idx'] ?? 0,
         commentid: d['cmtid'],
@@ -136,7 +134,6 @@ class LiveComment {
     return v == 'CHỐT' || v == 'CHOT';
   }
 
-  // Avatar: ưu tiên link từ socket, fallback về link cố định theo userid
   String avatarUrlResolved(String baseAvaUrl) {
     if (avatarUrl != null && avatarUrl!.startsWith('http')) return avatarUrl!;
     if (userid != null && userid!.isNotEmpty) return '$baseAvaUrl/$userid.jpg';

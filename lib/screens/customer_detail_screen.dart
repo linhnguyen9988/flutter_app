@@ -13,13 +13,12 @@ import 'order_timeline_screen.dart';
 import 'qr_scan_screen.dart';
 import '../services/reload_aware_mixin.dart';
 
-// Backend chính
 const String _mainUrl = 'https://aodaigiabao.com';
 
 class CustomerDetailScreen extends StatefulWidget {
   final Customer customer;
   final List<String> selectedLiveIds;
-  final List<LiveComment> liveComments; // để truyền cho QR khi tự mở lại
+  final List<LiveComment> liveComments;
   const CustomerDetailScreen({
     super.key,
     required this.customer,
@@ -35,8 +34,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
     with ReloadAwareMixin<CustomerDetailScreen> {
   late Customer _customer;
   bool _saving = false;
-  final Set<String> _editingFields =
-      {}; // 'phone','address','label','tag','note'
+  final Set<String> _editingFields = {};
 
   bool get _editing => _editingFields.isNotEmpty;
   bool _phoneCopied = false;
@@ -47,14 +45,12 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
     _saveChanges(silent: true);
   }
 
-  // Thông tin chỉnh sửa
   late TextEditingController _phoneCtrl;
   late TextEditingController _addressCtrl;
   late TextEditingController _noteCtrl;
   String _selectedLabel = '';
   late TextEditingController _tagCtrl;
 
-  // Lên đơn
   final _codCtrl = TextEditingController(text: '0');
   final _kgCtrl = TextEditingController(text: '1');
   List<Map<String, dynamic>> _savedAddresses = [];
@@ -67,15 +63,12 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
   bool _creatingOrder = false;
   bool _printing = false;
 
-  // Đơn hàng gần nhất
   List<Order> _recentOrders = [];
   bool _loadingOrders = false;
 
-  // Chốt live đang load
   List<Map<String, dynamic>> _liveChotData = [];
   bool _loadingLiveChots = false;
 
-  // Tin nhắn cuối
   Map<String, dynamic>? _lastMessage;
   bool _loadingLastMsg = false;
 
@@ -109,7 +102,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
     super.dispose();
   }
 
-// ── Tin nhắn cuối ─────────────────────────────────────────────
   Future<void> _loadLastMessage() async {
     final userid = _customer.userid ?? '';
     if (userid.isEmpty) return;
@@ -118,7 +110,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
       final result =
           await ApiService.getConversation(userid, limit: 1, offset: 0);
       if (mounted && result.messages.isNotEmpty) {
-        // Lấy tin mới nhất (đã sort DESC từ DB, index 0 là mới nhất)
         setState(() => _lastMessage = result.messages.first.toJson());
       }
     } catch (_) {
@@ -136,12 +127,11 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
     if (text.isNotEmpty) return '$prefix$text';
     if (image.isNotEmpty) {
       if (image.toLowerCase().contains('like')) return '${prefix}👍';
-      return '${prefix}📷 Hình ảnh';
+      return '${prefix}👍';
     }
     return '${prefix}(Tin nhắn)';
   }
 
-  // ── Đơn hàng gần nhất ─────────────────────────────────────────
   Future<void> _loadRecentOrders() async {
     final userid = _customer.userid ?? '';
     if (userid.isEmpty) return;
@@ -155,12 +145,10 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
     }
   }
 
-  // ── Check khách chốt trong các live đang load ─────────────────
   Future<void> _loadLiveChots() async {
     final userid = _customer.userid ?? '';
     if (userid.isEmpty) return;
 
-    // Ưu tiên lấy từ widget.liveComments (đã parse đầy đủ, có gia/slchot đúng)
     if (widget.liveComments.isNotEmpty) {
       final data = widget.liveComments
           .where((c) =>
@@ -174,7 +162,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
       return;
     }
 
-    // Fallback: gọi API nếu không có liveComments (vào từ timeline)
     final liveIds = widget.selectedLiveIds;
     if (liveIds.isEmpty) return;
     setState(() => _loadingLiveChots = true);
@@ -203,7 +190,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
     }
   }
 
-  // ── Lên đơn ──────────────────────────────────────────────────
   Future<void> _loadSavedAddresses() async {
     final phone = _customer.phone ?? '';
     if (phone.isEmpty) return;
@@ -226,7 +212,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
     }
   }
 
-  // ── Check địa chỉ ViettelPost ─────────────────────────────────
   Future<void> _checkAddress() async {
     final address = _addressCtrl.text.trim();
     if (address.isEmpty) return;
@@ -253,7 +238,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
       final adx = res['adx']?.toString() ?? '';
       _snack('✓ $adx', AppTheme.accent);
 
-      // Thêm vào savedAddresses nếu chưa có, rồi chọn luôn
       final newEntry = {
         'address': address,
         'phone': _customer.phone ?? '',
@@ -266,7 +250,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
         final exists =
             _savedAddresses.any((a) => a['address']?.toString() == address);
         if (!exists) _savedAddresses.insert(0, newEntry);
-        // Tìm index của địa chỉ vừa check → select ngay
         final idx = _savedAddresses
             .indexWhere((a) => a['address']?.toString() == address);
         _selectedAddressIndex = idx >= 0 ? idx : 0;
@@ -289,7 +272,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
     return buf.toString();
   }
 
-  // ── Banner chốt trong live đang load ──────────────────────────
   Widget _buildLiveChotBanner() {
     if (_loadingLiveChots) {
       return Row(children: [
@@ -304,8 +286,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
       ]);
     }
 
-    // Lọc chỉ lấy record đã chốt (chot == 'CHỐT') và slchot > 0
-    // Giống _userComments bên ChotDonScreen: gom theo giá
     int parsePrice(String? raw) {
       if (raw == null || raw.isEmpty) return 0;
       final cleaned = raw.replaceAll(RegExp(r'[^0-9]'), '');
@@ -334,7 +314,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
       return '${str}k';
     }
 
-    // Chỉ lấy các record đã chốt thực sự
     final chotItems = _liveChotData.where((item) {
       final chot = (item['chot'] ?? '').toString().toUpperCase().trim();
       final sl = (item['slchot'] as num?)?.toInt() ?? 0;
@@ -352,7 +331,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
       ]);
     }
 
-    // Gom theo giá — giống _buildOrderMessage bên ChotDonScreen
     final Map<int, int> priceQtyMap = {};
     int totalAmount = 0;
     int totalSl = 0;
@@ -364,7 +342,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
       totalSl += qty;
     }
 
-    // Build tin nhắn giống _buildOrderMessage bên ChotDonScreen
     String _buildChotMessage() {
       final name = _customer.fbname ?? _customer.displayName;
       const pronoun = 'chị';
@@ -429,9 +406,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
   String _addressLabel(Map<String, dynamic> a) =>
       (a['address'] ?? '').toString();
 
-  // Tính kg in nhãn theo đúng logic JS gốc
   int _calcLabelKg(double kgInput) {
-    int kg = (kgInput * 1000).round(); // đổi sang gram
+    int kg = (kgInput * 1000).round();
     if (kg <= 1000) return 500;
     if (kg <= 2000) return 1000;
     if (kg <= 3000) return 1500;
@@ -442,8 +418,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
     return kg - 5000;
   }
 
-  // ── Barcode — 5.5cm x 0.8cm, dùng barcodeapi.org embed base64 ─
-  // Wrap trong div overflow:hidden để crop phần text API tự thêm bên dưới
   Future<String> _makeBarcodeBase64(String data) async {
     try {
       final url = 'https://barcodeapi.org/api/128/${Uri.encodeComponent(data)}';
@@ -451,8 +425,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
           await http.get(Uri.parse(url)).timeout(const Duration(seconds: 6));
       if (res.statusCode == 200) {
         final b64 = base64Encode(res.bodyBytes);
-        // API trả ảnh ~50px cao (barcode 30px + text ~20px dưới)
-        // div height=30 + overflow:hidden sẽ cắt phần text
         return '<div style="width:208px;height:30px;overflow:hidden;">'
             '<img src="data:image/png;base64,$b64" width="208" style="display:block;"/>'
             '</div>';
@@ -461,7 +433,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
     return '<p style="font-size:10px;">$data</p>';
   }
 
-  // ── QR Code — 2x2cm = 76x76px, dùng api.qrserver.com ─────────
   Future<String> _makeQrBase64(String data) async {
     try {
       final url = 'https://api.qrserver.com/v1/create-qr-code/'
@@ -473,11 +444,9 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
         return '<img src="data:image/png;base64,$b64" width="76" height="76"/>';
       }
     } catch (_) {}
-    // Fallback: hiện text mã đơn
     return '<p style="font-size:9px;word-break:break-all;">$data</p>';
   }
 
-  // Build HTML nhãn in — đúng như JS gốc (có barcode + QR)
   Future<String> _buildPrintHtml({
     required Map<String, dynamic> res,
     required String fbname,
@@ -531,21 +500,18 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
     final codRaw = _codCtrl.text.replaceAll('.', '').trim();
     final kgStr = _kgCtrl.text.trim();
 
-    // ── Validate COD ─────────────────────────────────────────────
     final int cod = int.tryParse(codRaw) ?? -1;
     if (cod < 0) {
       _snack('COD không hợp lệ (không được âm)', Colors.orange);
       return;
     }
 
-    // ── Validate KG ──────────────────────────────────────────────
     final double kg = double.tryParse(kgStr) ?? -1;
     if (kg < 0) {
       _snack('Số ký không hợp lệ (không được âm)', Colors.orange);
       return;
     }
     if (kg > 20) {
-      // Cảnh báo nhưng vẫn cho tiếp tục
       final confirm = await showDialog<bool>(
         context: context,
         builder: (_) => AlertDialog(
@@ -574,7 +540,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
       if (confirm != true) return;
     }
 
-    // ── Validate địa chỉ — bắt buộc phải chọn từ dropdown ───────
     if (_selectedAddress == null) {
       _snack(
           'Vui lòng check địa chỉ trước khi lên đơn\n(nhấn đúp vào ô Địa chỉ → nhập → ✓)',
@@ -589,7 +554,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
 
     final phone = _phoneCtrl.text.trim();
 
-    // ── Validate SĐT ─────────────────────────────────────────────
     if (phone.length != 10 && !phone.startsWith('02')) {
       _snack('Số điện thoại không hợp lệ (cần 10 số)', Colors.orange);
       return;
@@ -629,11 +593,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
 
       if (realorderid.isEmpty) return;
 
-      // Mở QR scan sau khi lên đơn thành công
       if (mounted) {
-        // Dismiss bàn phím trước để tránh overflow
         FocusManager.instance.primaryFocus?.unfocus();
-        // Đợi bàn phím đóng xong rồi mới mở QR
         await Future.delayed(const Duration(milliseconds: 300));
         if (!mounted) return;
         Navigator.push(
@@ -652,7 +613,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
         );
       }
 
-      // Build HTML nhãn đúng như JS gốc
       final html = await _buildPrintHtml(
         res: res,
         fbname: fbname,
@@ -662,7 +622,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
         kgInput: kg,
       );
 
-      // ── Gọi /printviettel (form-encoded, như $.ajax default của JS) ──
       try {
         await http.post(
           Uri.parse('$_mainUrl/printviettel'),
@@ -673,7 +632,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
         );
       } catch (_) {}
 
-      // ── Gọi /print-order (JSON, có check máy in offline) ──────────
       try {
         final userId = ApiService.userId;
         final printRes = await http.post(
@@ -694,9 +652,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
         if (printData['success'] != true) {
           _snack('Máy in đang Offline!', Colors.orange);
         }
-      } catch (_) {
-        // Lỗi kết nối route in — bỏ qua như JS gốc
-      }
+      } catch (_) {}
     } catch (e) {
       _snack('Lỗi: $e', Colors.red);
     } finally {
@@ -704,7 +660,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
     }
   }
 
-  // ── In tem khách hàng ────────────────────────────────────────
   Future<void> _printCustomerLabel() async {
     if (_printing) return;
     setState(() => _printing = true);
@@ -781,7 +736,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
       ));
   }
 
-  // ── Save thông tin khách ──────────────────────────────────────
   Future<void> _saveChanges({bool silent = false}) async {
     setState(() => _saving = true);
     try {
@@ -804,7 +758,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
     }
   }
 
-  // ── Label ─────────────────────────────────────────────────────
   static const _labelOptions = [
     'Bom hàng',
     'Xả hàng',
@@ -827,14 +780,12 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
     }
   }
 
-  // ── Build ──────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Chi tiết khách hàng'),
         actions: [
-          // Nút in tem khách hàng
           _printing
               ? const Padding(
                   padding: EdgeInsets.all(12),
@@ -848,15 +799,23 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
                   tooltip: 'In tem',
                   onPressed: _printCustomerLabel,
                 ),
-          // Nút mở QR scan — truyền liveComments để quét khách khác
           IconButton(
             icon: const Icon(Icons.qr_code_scanner),
             tooltip: 'Quét QR',
-            onPressed: () => Navigator.push(
+            onPressed: () => Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(
-                builder: (_) => QrScanScreen(liveComments: widget.liveComments),
+              PageRouteBuilder(
+                pageBuilder: (_, __, ___) =>
+                    QrScanScreen(liveComments: widget.liveComments),
+                transitionsBuilder: (_, anim, __, child) => SlideTransition(
+                  position:
+                      Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero)
+                          .animate(CurvedAnimation(
+                              parent: anim, curve: Curves.easeOutCubic)),
+                  child: child,
+                ),
               ),
+              (route) => route.isFirst,
             ),
           ),
           if (_editing)
@@ -881,7 +840,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Avatar + tên ────────────────────────────────────
             Center(
                 child: Column(children: [
               CircleAvatar(
@@ -922,27 +880,21 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
               ],
             ])),
             const SizedBox(height: 24),
-
-            // ── Liên hệ ──────────────────────────────────────────
             _sectionHeader('Liên hệ'),
             _infoCard(children: [
               _editableField('Số điện thoại', _phoneCtrl, Icons.phone,
                   fieldKey: 'phone'),
               _editableField('Địa chỉ', _addressCtrl, Icons.location_on,
                   fieldKey: 'address', onSaved: _checkAddress),
-              // ── Tin nhắn cuối ──────────────────────────────────
               _buildLastMessageRow(),
               const Divider(
                   height: 1,
                   color: AppTheme.darkSurface,
                   indent: 16,
                   endIndent: 16),
-              // ── Business Suite ─────────────────────────────────
               _buildBusinessSuiteRow(),
             ]),
             const SizedBox(height: 16),
-
-            // ── Lên đơn ──────────────────────────────────────────
             _sectionHeader('Lên đơn ViettelPost'),
             Container(
               decoration: BoxDecoration(
@@ -952,7 +904,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Dòng 1: COD + KG + icon xe
                     Row(children: [
                       Expanded(
                         flex: 2,
@@ -1005,7 +956,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
                         ),
                       ),
                       const SizedBox(width: 8),
-                      // Nút lên đơn — icon xe nhỏ
                       SizedBox(
                         width: 46,
                         height: 46,
@@ -1029,7 +979,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
                       ),
                     ]),
                     const SizedBox(height: 10),
-                    // Dòng 2: Select địa chỉ đã lưu
                     if (_loadingAddresses)
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 8),
@@ -1084,16 +1033,12 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
                           ),
                         ),
                       ),
-                    // Dòng 3: Thông báo chốt trong live đang load
                     const SizedBox(height: 8),
                     _buildLiveChotBanner(),
                   ]),
             ),
             const SizedBox(height: 16),
-
             const SizedBox(height: 16),
-
-            // ── Đơn hàng gần nhất ────────────────────────────────
             _sectionHeader('Đơn hàng gần nhất'),
             if (_loadingOrders)
               const Padding(
@@ -1175,7 +1120,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
                                 ),
                                 const Icon(Icons.chevron_right,
                                     color: AppTheme.textSecondary, size: 16),
-                                // Nút in lại
                                 if (o.realorderid != null &&
                                     o.realorderid!.isNotEmpty)
                                   _ReprintButton(
@@ -1192,16 +1136,12 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
                   }).toList(),
                 ),
               ),
-
-            // ── Phân loại ────────────────────────────────────────
             _sectionHeader('Phân loại'),
             _infoCard(children: [
               _buildLabelField(),
               _editableField('Tag', _tagCtrl, Icons.tag),
             ]),
             const SizedBox(height: 16),
-
-            // ── Ghi chú ──────────────────────────────────────────
             _sectionHeader('Ghi chú'),
             GestureDetector(
               onDoubleTap: () => _startEdit('note'),
@@ -1261,7 +1201,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
             borderSide: BorderSide.none),
       );
 
-  final GlobalKey _labelKey = GlobalKey(); // Thêm dòng này
+  final GlobalKey _labelKey = GlobalKey();
   Widget _buildLabelField() {
     final displayLabel = _selectedLabel.isEmpty
         ? 'Chưa có nhãn  —  nhấn đúp để sửa'
@@ -1323,7 +1263,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
                     items: _labelOptions.map((opt) {
                       final isDelete = opt == 'Xóa nhãn';
 
-                      // Xác định màu sắc dựa trên giá trị của opt
                       Color optColor;
                       if (isDelete) {
                         optColor = AppTheme.textSecondary;
@@ -1332,8 +1271,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
                       } else if (opt == 'Thân thiết') {
                         optColor = Colors.lightGreenAccent;
                       } else {
-                        optColor =
-                            Colors.red; // Mặc định cho các trường hợp còn lại
+                        optColor = Colors.red;
                       }
 
                       return DropdownMenuItem<String>(
@@ -1430,37 +1368,25 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
     final canOpen = realfbid.isNotEmpty;
 
     Future<void> open() async {
-      // 1. Lấy ID chuẩn từ trường "link" nếu có, vì t_... thường không dùng để deep link
-      // Link của bạn: /223266991771270/inbox/909242809840348/?section=messages
-      String finalThreadId = '444227216867709'; // Fallback
+      String finalThreadId = '444227216867709';
 
       final RegExp regExp = RegExp(r'inbox/(\d+)/');
       final match = regExp.firstMatch(
-          '/223266991771270/inbox/909242809840348/?section=messages'); // linkFromApi là cái chuỗi "/2232.../"
+          '/223266991771270/inbox/909242809840348/?section=messages');
       if (match != null) {
         finalThreadId = match.group(1)!;
       }
 
-      // 2. Danh sách các "Deepest" Schemes
       final candidates = <String>[
-        // Cấu trúc dùng query param mới (ưu tiên selected_thread_id)
         'fb-business-suite://inbox/messenger?asset_id=$pageId&selected_thread_id=$finalThreadId',
-
-        // Cấu trúc phân cấp đường dẫn
         'fb-business-suite://inbox/messenger/$pageId/$finalThreadId',
-
-        // Cấu trúc dành cho thread trực tiếp
         'fb-business-suite://thread/$finalThreadId?asset_id=$pageId',
-
-        // Cấu trúc cũ hơn nhưng vẫn hiệu quả trên một số bản Android
         'fb-business-suite://inbox?asset_id=$pageId&selected_item_id=$finalThreadId',
       ];
 
-      // 3. Thực thi thử nghiệm các scheme
       for (final scheme in candidates) {
         try {
           final uri = Uri.parse(scheme);
-          // Mode externalApplication để ép mở App Meta
           final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
           if (ok) return;
         } catch (e) {
@@ -1468,9 +1394,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
         }
       }
 
-      // 4. Fallback: Dùng Universal Link (Cách này dễ vào nhất nếu các scheme trên bị chặn)
-      // Đừng dùng externalApplication ở đây, hãy dùng platformDefault
-      // để Hệ điều hành tự nhận diện App Meta Business Suite.
       final webUrl =
           'https://business.facebook.com/latest/inbox/messenger/$pageId/$finalThreadId';
 
@@ -1569,7 +1492,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(children: [
-          // Icon + label — tap gọi luôn nếu là phone
           GestureDetector(
             onTap:
                 isPhone && !editing && ctrl.text.isNotEmpty ? callPhone : null,
@@ -1655,7 +1577,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
   }
 }
 
-// ── Widget nút in lại đơn ─────────────────────────────────────
 class _ReprintButton extends StatefulWidget {
   final String realorderid;
   final void Function(String) onError;
@@ -1672,7 +1593,6 @@ class _ReprintButtonState extends State<_ReprintButton> {
     if (_printing) return;
     setState(() => _printing = true);
     try {
-      // 1. Fetch HTML từ file .txt
       final txtRes = await http.get(
         Uri.parse('$_mainUrl/donhang/${widget.realorderid}.txt'),
       );
@@ -1682,7 +1602,6 @@ class _ReprintButtonState extends State<_ReprintButton> {
       }
       final html = txtRes.body;
 
-      // 2. Gọi /print-order
       final userId = ApiService.userId;
       final printRes = await http.post(
         Uri.parse('$_mainUrl/print-order'),

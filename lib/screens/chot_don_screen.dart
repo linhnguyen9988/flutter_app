@@ -10,7 +10,6 @@ import '../widgets/app_sidebar.dart';
 import 'chat_screen.dart';
 import 'customer_detail_screen.dart';
 
-// URL socket backend của bạn (không có /api)
 const String _socketUrl = 'https://aodaigiabao.com';
 const String _avaBase = 'https://aodaigiabao.com/images/ava';
 
@@ -25,34 +24,27 @@ class ChotDonScreenState extends State<ChotDonScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabCtrl;
 
-  // Livestreams
   List<Map<String, dynamic>> _livestreams = [];
   final List<Map<String, dynamic>> _selectedLives = [];
   bool _loadingLives = true;
 
-  // Comments
   List<LiveComment> _comments = [];
   bool _loadingComments = false;
 
-  // Public getter để HomeScreen lấy comments truyền vào QrScanScreen
   List<LiveComment> get comments => _comments;
 
-  // Public getter để các screen khác biết live nào đang được chọn
   List<String> get selectedLiveIds =>
       _selectedLives.map((l) => l['id'].toString()).toList();
 
-  // Public — gọi từ HomeScreen khi app resume
   void reload() => _loadLivestreams();
   final _searchCtrl = TextEditingController();
   String _searchText = '';
   bool _searchVisible = false;
 
-  // Giữ vị trí scroll danh sách bình luận + ẩn/hiện header
   final _commentScrollCtrl = ScrollController();
   bool _headerVisible = true;
   double _lastScrollOffset = 0;
 
-  // Socket
   IO.Socket? _socket;
   bool _socketConnected = false;
 
@@ -69,10 +61,8 @@ class ChotDonScreenState extends State<ChotDonScreen>
     final offset = _commentScrollCtrl.offset;
     final diff = offset - _lastScrollOffset;
     if (diff > 8 && _headerVisible) {
-      // Kéo lên → ẩn header
       setState(() => _headerVisible = false);
     } else if (diff < -8 && !_headerVisible) {
-      // Kéo xuống → hiện header
       setState(() => _headerVisible = true);
     }
     _lastScrollOffset = offset;
@@ -80,13 +70,11 @@ class ChotDonScreenState extends State<ChotDonScreen>
 
   @override
   void dispose() {
-    // 1. Xóa các listener trước
     _socket?.off('connect');
     _socket?.off('reconnect');
     _socket?.off('disconnect');
     _socket?.off('new-comment');
 
-    // 2. Sau đó mới disconnect và dispose socket
     _socket?.disconnect();
     _socket?.dispose();
 
@@ -97,7 +85,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
     super.dispose();
   }
 
-  // ── Socket ────────────────────────────────────────────────────
   void _connectSocket() {
     _socket = IO.io(
         _socketUrl,
@@ -108,7 +95,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
 
     _socket!.onConnect((_) {
       if (mounted) setState(() => _socketConnected = true);
-      // Rejoin tất cả rooms đang chọn (reconnect case)
       for (final live in _selectedLives) {
         _socket!.emit('join-live-stream', live['id']);
       }
@@ -123,22 +109,18 @@ class ChotDonScreenState extends State<ChotDonScreen>
     });
 
     _socket!.onDisconnect((_) {
-      // Kiểm tra mounted cực kỳ quan trọng ở đây
       if (mounted) {
         setState(() {
           _socketConnected = false;
         });
       }
     });
-    // Lắng nghe bình luận mới từ webhook backend
     _socket!.on('new-comment', (data) {
       if (!mounted) return;
       final Map<String, dynamic> d = Map<String, dynamic>.from(data);
       final newComment = LiveComment.fromSocket(d);
-      // Chỉ thêm nếu thuộc live đang xem
       final joinedIds = _selectedLives.map((l) => l['id']).toSet();
       if (joinedIds.contains(newComment.liveid)) {
-        // Tránh duplicate
         final exists = _comments.any(
             (c) => c.commentid == newComment.commentid && c.commentid != null);
         if (!exists) setState(() => _comments.insert(0, newComment));
@@ -149,11 +131,9 @@ class ChotDonScreenState extends State<ChotDonScreen>
   }
 
   void _joinLiveRoom(String liveId) {
-    // Emit dù connected hay không - socket.io client sẽ queue lại
     _socket?.emit('join-live-stream', liveId);
   }
 
-  // ── Load livestreams ──────────────────────────────────────────
   Future<void> _loadLivestreams() async {
     setState(() => _loadingLives = true);
     try {
@@ -167,7 +147,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
     }
   }
 
-  // ── Load comments của live đã chọn ───────────────────────────
   Future<void> _loadComments(String liveId, {bool clearFirst = false}) async {
     setState(() => _loadingComments = true);
     try {
@@ -226,7 +205,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
     });
   }
 
-  // ── Filter ───────────────────────────────────────────────────
   static String _nd(String s) {
     const map = {
       'à': 'a',
@@ -314,7 +292,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
     return list;
   }
 
-  // ── Build ──────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -425,7 +402,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
     );
   }
 
-  // ── TAB 1: Bình luận ──────────────────────────────────────────
   Widget _buildCommentsTab() {
     return Column(
       children: [
@@ -434,7 +410,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
     );
   }
 
-  // ── Live selector compact cho AppBar ─────────────────────────
   Widget _buildAppBarLiveSelector() {
     if (_loadingLives) {
       return const SizedBox(
@@ -511,7 +486,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
     );
   }
 
-  // Sheet chọn live — bấm vào AppBar selector để mở
   void _showLivePickerSheet() {
     showModalBottomSheet(
       context: context,
@@ -630,7 +604,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
     );
   }
 
-  // Màu tên theo label
   Color _nameColor(String? label) {
     switch (label) {
       case 'Bom hàng':
@@ -675,7 +648,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
   }
 
   Widget _buildCommentTile(LiveComment c, {Key? key}) {
-    // Wrap với KeyedSubtree để Flutter track đúng widget state theo commentid
     return KeyedSubtree(
       key: key,
       child: _buildCommentTileInner(c),
@@ -728,7 +700,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Tên + label tag + nước ngoài badge
                   Row(children: [
                     Flexible(
                       child: Text(c.name ?? 'Ẩn danh',
@@ -747,7 +718,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
                     if (hasLabel) _labelTag(c.customerLabel!),
                     const Spacer(),
                   ]),
-                  // SĐT — hiển thị thuần, tap gọi/copy ở modal bên dưới
                   if (hasPhone)
                     Text(
                       c.customerPhone!,
@@ -780,7 +750,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
               ),
             ),
             const SizedBox(width: 6),
-            // Cột nút bên phải
             Column(mainAxisSize: MainAxisSize.min, children: [
               if (c.hasOrder) ...[
                 GestureDetector(
@@ -796,7 +765,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
                 ),
                 const SizedBox(height: 4),
               ],
-              // Nút xem toàn bộ bình luận của khách trong live này
               GestureDetector(
                 onTap: () => _showUserComments(c),
                 child: Container(
@@ -945,7 +913,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
                             ? Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  // Nút xả
                                   GestureDetector(
                                     onTap: () async {
                                       await ApiService.postRaw(
@@ -994,7 +961,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
                                           color: Colors.orange, size: 16),
                                     ),
                                   ),
-                                  // Nút xem giỏ hàng
                                   GestureDetector(
                                     onTap: () {
                                       Navigator.pop(context);
@@ -1025,13 +991,9 @@ class ChotDonScreenState extends State<ChotDonScreen>
     );
   }
 
-  // ── TAB 2: Cart ───────────────────────────────────────────────
-  // ── TAB 2: Chốt đơn ─────────────────────────────────────────
-  // _selectedUser: khách đang xem, _userComments: bình luận chốt của khách đó
   LiveComment? _selectedUser;
   List<LiveComment> _userComments = [];
-  bool _includeShip = true; // Toggle phí ship
-
+  bool _includeShip = true;
   void _openUserCart(LiveComment c) {
     final userChotComments = _comments
         .where((x) => x.userid == c.userid && x.hasOrder)
@@ -1040,7 +1002,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
 
     setState(() {
       _selectedUser = c;
-      _userComments = List<LiveComment>.from(userChotComments); // copy độc lập
+      _userComments = List<LiveComment>.from(userChotComments);
       _includeShip = true;
     });
     _tabCtrl.animateTo(1);
@@ -1049,25 +1011,22 @@ class ChotDonScreenState extends State<ChotDonScreen>
   void openCartFromQr(LiveComment rep, List<LiveComment> chotComments) {
     setState(() {
       _selectedUser = rep;
-      _userComments = List<LiveComment>.from(chotComments); // copy độc lập
+      _userComments = List<LiveComment>.from(chotComments);
       _includeShip = true;
     });
     _tabCtrl.animateTo(1);
   }
 
-  // Parse giá: lấy số đầu tiên trong chuỗi, vd "35k" -> 35000, "120.000" -> 120000
   int _parsePrice(String? raw) {
     if (raw == null || raw.isEmpty) return 0;
     final cleaned = raw.replaceAll(RegExp(r'[^0-9]'), '');
     if (cleaned.isEmpty) return 0;
     int val = int.tryParse(cleaned) ?? 0;
-    // Nếu < 1000 thì coi là nghìn (35 -> 35000)
     if (val > 0 && val < 1000) val *= 1000;
     return val;
   }
 
   String _formatMoney(int val) {
-    // Hiện số đầy đủ, thêm dấu chấm phân cách nghìn cho dễ đọc
     if (val == 0) return '0';
     final str = val.toString();
     final buf = StringBuffer();
@@ -1078,7 +1037,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
     return buf.toString() + 'đ';
   }
 
-  // Format gọn cho tin nhắn: 150000 -> 150k, 150500 -> 150.5k
   String _formatMoneyK(int val) {
     if (val == 0) return '0';
     if (val % 1000 == 0) return '${val ~/ 1000}k';
@@ -1087,13 +1045,11 @@ class ChotDonScreenState extends State<ChotDonScreen>
     return '${str}k';
   }
 
-  // Tạo chuỗi chốt đơn để gửi tin nhắn
   String _buildOrderMessage(LiveComment user, List<LiveComment> items,
       {bool includeShip = true}) {
     final name = user.name ?? 'bạn';
     const pronoun = 'chị';
 
-    // Gom các item cùng giá: price -> tổng qty
     final Map<int, int> priceQtyMap = {};
     int total = 0;
     for (final c in items) {
@@ -1103,7 +1059,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
       total += price * qty;
     }
 
-    // Sort giá tăng dần
     final sortedPrices = priceQtyMap.keys.toList()..sort();
     final lines = <String>[];
     for (final price in sortedPrices) {
@@ -1128,12 +1083,10 @@ class ChotDonScreenState extends State<ChotDonScreen>
     }
 
     final u = _selectedUser!;
-    // Snapshot list ngay đầu build — tránh race condition giữa itemCount và itemBuilder
     final items = List<LiveComment>.from(_userComments);
     final avaUrl = u.avatarUrlResolved(_avaBase);
     final nameColor = _nameColor(u.customerLabel);
 
-    // Tính tổng
     int subtotal = 0;
     int totalQty = 0;
     for (final c in items) {
@@ -1145,7 +1098,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
     final grandTotal = subtotal + (_includeShip ? ship : 0);
 
     return Column(children: [
-      // Header khách hàng
       Container(
         color: AppTheme.darkCard,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -1198,7 +1150,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
                     ]),
                   ),
               ])),
-          // Nút clear
           IconButton(
             icon: const Icon(Icons.close, color: AppTheme.textSecondary),
             onPressed: () => setState(() {
@@ -1209,8 +1160,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
         ]),
       ),
       const Divider(height: 0, color: Color(0xFF3A3B3C)),
-
-      // Danh sách bình luận chốt
       Expanded(
         child: items.isEmpty
             ? _buildEmpty('Khách này chưa có bình luận chốt')
@@ -1249,7 +1198,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Nút xả chốt
                         GestureDetector(
                           onTap: () => _xaComment(c),
                           child: Container(
@@ -1263,7 +1211,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
                                 color: Colors.orange, size: 18),
                           ),
                         ),
-                        // Nút xoá khỏi giỏ
                         GestureDetector(
                           onTap: () {
                             final updated =
@@ -1287,13 +1234,10 @@ class ChotDonScreenState extends State<ChotDonScreen>
                 },
               ),
       ),
-
-      // Tổng kết + nút gửi
       Container(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
         color: AppTheme.darkCard,
         child: Column(children: [
-          // Tóm tắt giá
           Row(children: [
             Text('Hàng:',
                 style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
@@ -1416,10 +1360,8 @@ class ChotDonScreenState extends State<ChotDonScreen>
     );
   }
 
-  // ── Detail sheet ──────────────────────────────────────────────
   void _showCommentDetail(LiveComment c) {
     final avaUrl = c.avatarUrlResolved(_avaBase);
-    // Input controllers cho dialog
     final giaCtrl = TextEditingController(text: c.gia ?? '');
     final slCtrl = TextEditingController(text: (c.slchot ?? 1).toString());
 
@@ -1448,7 +1390,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
                         color: AppTheme.darkSurface,
                         borderRadius: BorderRadius.circular(2)))),
             const SizedBox(height: 16),
-            // Header: avatar + tên
             Row(children: [
               _RetryAvatar(
                 radius: 24,
@@ -1496,7 +1437,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
             const SizedBox(height: 8),
             Text(c.message ?? '',
                 style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
-            // Tags chốt hiện có
             if (c.chot != null && c.chot!.isNotEmpty) ...[
               const SizedBox(height: 8),
               Row(children: [
@@ -1512,7 +1452,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
               ]),
             ],
             const SizedBox(height: 14),
-            // Input giá + số lượng
             Row(children: [
               Expanded(
                 flex: 3,
@@ -1564,9 +1503,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
               ),
             ]),
             const SizedBox(height: 14),
-            // Nút hành động
             Row(children: [
-              // Xả chốt — chỉ hiện khi đã chốt
               if (c.hasOrder) ...[
                 Expanded(
                   child: OutlinedButton.icon(
@@ -1584,7 +1521,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
                 ),
                 const SizedBox(width: 8),
               ],
-              // Xem đơn chốt
               Expanded(
                 child: OutlinedButton.icon(
                   icon: const Icon(Icons.shopping_cart_outlined, size: 15),
@@ -1601,7 +1537,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
                 ),
               ),
               const SizedBox(width: 8),
-              // In đơn
               Expanded(
                 child: OutlinedButton.icon(
                   icon: const Icon(Icons.print_outlined, size: 15),
@@ -1618,7 +1553,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
                 ),
               ),
               const SizedBox(width: 8),
-              // Chốt
               Expanded(
                 child: ElevatedButton.icon(
                   icon: const Icon(Icons.check_circle_outline,
@@ -1646,7 +1580,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
     );
   }
 
-  // Gọi API in đơn
   Future<void> _printComment(LiveComment c, String gia, int sl) async {
     final cleanGia = gia.replaceAll(RegExp(r'[^0-9]'), '');
     final now = DateTime.now();
@@ -1660,12 +1593,11 @@ class ChotDonScreenState extends State<ChotDonScreen>
       'gia': cleanGia.isEmpty ? '0' : cleanGia,
       'id': (c.khid ?? c.idx).toString(),
       'avabase64': 'https://aodaigiabao.com/images/ava/${c.userid ?? ""}.jpg',
-      'note': c.note ?? '', // note của livestream (table livestream)
+      'note': c.note ?? '',
       'address': c.diachi ?? '',
       'region': c.region ?? c.nuocngoai ?? '',
     };
     try {
-      // 1. Sinh PDF
       final pdfRes = await ApiService.postRaw(
           'https://aodaigiabao.com/api/generate-pdf', printData);
 
@@ -1687,7 +1619,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
         return;
       }
 
-      // 2. Gửi lệnh in từng tờ
       for (int k = 0; k < sl; k++) {
         final printRes =
             await ApiService.postRaw('https://aodaigiabao.com/print-order', {
@@ -1710,8 +1641,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
           return;
         }
       }
-
-      // Không hiện thông báo thành công
     } catch (e) {
       if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -1719,7 +1648,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
     }
   }
 
-  // Tính luot cao nhất trong toàn bộ comments (tương đương highAndLow trong JS)
   int _maxLuotin() {
     int max = 0;
     for (final c in _comments) {
@@ -1729,7 +1657,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
     return max;
   }
 
-  // Gọi API chốt + in đơn
   Future<void> _chotComment(LiveComment c, String gia, int sl) async {
     final cleanGia = gia.replaceAll(RegExp(r'[^0-9]'), '');
     if (cleanGia.isEmpty) {
@@ -1739,11 +1666,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
       return;
     }
 
-    // Tính luotcuoi như JS:
-    // luotincuoi = max luotin toàn bảng (highAndLow)
-    // xx = luotin của comment này
-    // luotcuoi = (xx==0) ? luotincuoi+1 : xx
-    // luotcuoilive = (xx==0) ? luotcuoi : luotincuoi
     final luotincuoi = _maxLuotin();
     final xx = c.luotin ?? 0;
     final luotcuoi = (xx == 0) ? (luotincuoi + 1) : xx;
@@ -1754,7 +1676,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
         '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
 
     try {
-      // 1. Cập nhật chốt vào DB
       final chotRes =
           await ApiService.postRaw('https://aodaigiabao.com/updatechot', {
         'commentid': c.commentid ?? '',
@@ -1775,7 +1696,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
         return;
       }
 
-      // 2. Cập nhật local UI
       if (mounted) {
         setState(() {
           final idx = _comments.indexWhere((x) => x.commentid == c.commentid);
@@ -1791,7 +1711,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
         });
       }
 
-      // 3. Sinh PDF
       final printData = {
         'date': date,
         'luotcuoi': luotcuoi,
@@ -1826,7 +1745,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
         return;
       }
 
-      // 4. Gửi lệnh in từng tờ
       for (int k = 0; k < sl; k++) {
         final printRes =
             await ApiService.postRaw('https://aodaigiabao.com/print-order', {
@@ -1849,8 +1767,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
           return;
         }
       }
-
-      // Không hiện thông báo thành công
     } catch (e) {
       if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -1858,7 +1774,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
     }
   }
 
-  // Xả chốt — gọi /updatexa với chot='' và commentid
   Future<void> _xaComment(LiveComment c) async {
     try {
       await ApiService.postRaw('https://aodaigiabao.com/updatexa', {
@@ -1886,7 +1801,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
     }
   }
 
-  // ── Helpers ───────────────────────────────────────────────────
   Widget _buildEmpty(String msg) => Center(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Icon(Icons.inbox_outlined, color: AppTheme.textSecondary, size: 48),
@@ -1909,7 +1823,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
       );
 }
 
-// ── Widget badge LIVE nhấp nháy ───────────────────────────────
 class _LiveBadge extends StatefulWidget {
   const _LiveBadge();
   @override
@@ -1952,7 +1865,6 @@ class _LiveBadgeState extends State<_LiveBadge>
   }
 }
 
-// ── Widget avatar tự retry sau 0.5s với fallback userid.jpg ──────
 class _RetryAvatar extends StatefulWidget {
   final String? primaryUrl;
   final String? userid;
@@ -1975,7 +1887,7 @@ class _RetryAvatar extends StatefulWidget {
 class _RetryAvatarState extends State<_RetryAvatar> {
   String? _url;
   bool _triedFallback = false;
-  bool _loaded = false; // true khi ảnh đã hiện thành công — không reset nữa
+  bool _loaded = false;
 
   @override
   void initState() {
@@ -1988,7 +1900,6 @@ class _RetryAvatarState extends State<_RetryAvatar> {
   @override
   void didUpdateWidget(_RetryAvatar oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Reset khi khách thay đổi — dù ảnh đã load thành công vẫn phải reset
     if (oldWidget.primaryUrl != widget.primaryUrl ||
         oldWidget.userid != widget.userid) {
       _loaded = false;
@@ -2008,7 +1919,7 @@ class _RetryAvatarState extends State<_RetryAvatar> {
   }
 
   void _onError() {
-    _loaded = false; // load thất bại → chưa loaded
+    _loaded = false;
     if (_triedFallback) return;
     final fb = _fallbackUrl;
     if (fb == null || fb == _url) return;
@@ -2021,7 +1932,6 @@ class _RetryAvatarState extends State<_RetryAvatar> {
     });
   }
 
-  // Gọi khi Image load thành công (không có error)
   void _onLoaded() {
     if (!_loaded) _loaded = true;
   }
@@ -2076,7 +1986,6 @@ class _RetryAvatarState extends State<_RetryAvatar> {
   }
 }
 
-// Giữ state widget con khi TabBarView switch tab
 class KeepAliveWrapper extends StatefulWidget {
   final Widget child;
   const KeepAliveWrapper({super.key, required this.child});

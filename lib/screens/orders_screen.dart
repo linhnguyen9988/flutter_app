@@ -41,14 +41,12 @@ class OrdersScreenState extends State<OrdersScreen> {
     _loadOrders();
   }
 
-  // Public — gọi từ HomeScreen khi app resume
   void reload() => _loadOrders();
 
   Future<void> _loadOrders() async {
     try {
       List<Order> orders;
 
-      // Helper load nhiều status song song
       Future<List<Order>> _multi(List<String> statuses) async {
         final results = await Future.wait(
           statuses
@@ -64,22 +62,16 @@ class OrdersScreenState extends State<OrdersScreen> {
       } else if (_statusFilter == 'processing') {
         orders = await _multi(['102']);
       } else if (_statusFilter == 'shipping') {
-        // Đang vận chuyển: 300, 509
         orders = await _multi(['200', '202', '300', '400', '509']);
       } else if (_statusFilter == 'delivering') {
-        // Đang phát: 500, 508, 550
         orders = await _multi(['500', '508', '550']);
       } else if (_statusFilter == 'success') {
-        // Phát thành công: 501, 504
         orders = await _multi(['501']);
       } else if (_statusFilter == 'ton') {
-        // Có vấn đề: 505, 506, 507
         orders = await _multi(['505', '506', '507']);
       } else if (_statusFilter == 'return') {
-        // Chuyển hoàn: 502, 515, 551
         orders = await _multi(['502', '515', '551', '504']);
       } else if (_statusFilter == 'cancel') {
-        // Đã hủy: 107, 503
         orders = await _multi(['107', '503']);
       } else {
         orders = await ApiService.getOrders(
@@ -88,7 +80,6 @@ class OrdersScreenState extends State<OrdersScreen> {
         );
       }
 
-      // Filter thêm client-side theo tên khách (backend chưa search name)
       final q = _nd(_searchText.trim());
       if (q.isNotEmpty) {
         orders = orders.where((o) {
@@ -218,9 +209,9 @@ class OrdersScreenState extends State<OrdersScreen> {
           ),
         ],
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(32), // Giảm xuống 32
+          preferredSize: const Size.fromHeight(32),
           child: Transform.translate(
-            offset: const Offset(0, -6), // Nhấc lên 6 pixel
+            offset: const Offset(0, -6),
             child: Container(
               height: 32,
               child: ListView(
@@ -262,7 +253,6 @@ class OrdersScreenState extends State<OrdersScreen> {
     );
   }
 
-  // Bỏ dấu tiếng Việt để search không dấu
   static String _nd(String s) {
     const map = {
       'à': 'a',
@@ -336,7 +326,6 @@ class OrdersScreenState extends State<OrdersScreen> {
     return s.toLowerCase().split('').map((c) => map[c] ?? c).join();
   }
 
-  // Highlight các ký tự trùng với _searchText bằng màu xanh lá
   Widget _highlight(String text, TextStyle baseStyle,
       {TextOverflow? overflow, int? maxLines}) {
     final q = _nd(_searchText.trim());
@@ -344,7 +333,7 @@ class OrdersScreenState extends State<OrdersScreen> {
       return Text(text,
           style: baseStyle, overflow: overflow, maxLines: maxLines);
     }
-    final lower = _nd(text); // so sánh trên chuỗi không dấu
+    final lower = _nd(text);
     final spans = <TextSpan>[];
     int start = 0;
     while (true) {
@@ -393,7 +382,6 @@ class OrdersScreenState extends State<OrdersScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Avatar khách
             CircleAvatar(
               radius: 22,
               backgroundColor: AppTheme.darkSurface,
@@ -406,12 +394,10 @@ class OrdersScreenState extends State<OrdersScreen> {
                   : null,
             ),
             const SizedBox(width: 12),
-            // Nội dung
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Hàng 1: tên + badge trạng thái
                   Row(
                     children: [
                       Expanded(
@@ -425,7 +411,6 @@ class OrdersScreenState extends State<OrdersScreen> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      // Badge — dùng IntrinsicHeight để co theo chữ
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 7, vertical: 2),
@@ -445,7 +430,6 @@ class OrdersScreenState extends State<OrdersScreen> {
                     ],
                   ),
                   const SizedBox(height: 3),
-                  // Hàng 2: địa chỉ
                   if (order.address != null && order.address!.isNotEmpty)
                     Text(
                       order.address!,
@@ -455,7 +439,6 @@ class OrdersScreenState extends State<OrdersScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   const SizedBox(height: 3),
-                  // Hàng 3: SĐT + mã đơn
                   Row(
                     children: [
                       if (order.phone != null)
@@ -476,7 +459,6 @@ class OrdersScreenState extends State<OrdersScreen> {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  // Hàng 4: COD + kg + ngày
                   Row(
                     children: [
                       Text(
@@ -508,7 +490,6 @@ class OrdersScreenState extends State<OrdersScreen> {
       ),
     );
 
-    // Vuốt trái → hủy đơn, chỉ khi statuscode < 107
     if (!canCancel) return tile;
 
     return Dismissible(

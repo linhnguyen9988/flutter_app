@@ -6,8 +6,9 @@ import '../models/live_comment.dart';
 import '../services/api_service.dart';
 import 'customer_detail_screen.dart';
 import 'order_detail_screen.dart';
+import 'chat_screen.dart';
 
-enum _ScanMode { chotDon, lenDon }
+enum _ScanMode { chotDon, lenDon, tinNhan }
 
 class QrScanScreen extends StatefulWidget {
   final List<LiveComment> liveComments;
@@ -43,16 +44,27 @@ class _QrScanScreenState extends State<QrScanScreen>
   Future<void> _loadSavedMode() async {
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getString('qr_scan_mode');
-    if (saved == 'lenDon' && mounted) {
-      setState(() => _mode = _ScanMode.lenDon);
+    if (mounted) {
+      setState(() {
+        if (saved == 'lenDon')
+          _mode = _ScanMode.lenDon;
+        else if (saved == 'tinNhan')
+          _mode = _ScanMode.tinNhan;
+        else
+          _mode = _ScanMode.chotDon;
+      });
     }
   }
 
   Future<void> _setMode(_ScanMode mode) async {
     setState(() => _mode = mode);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-        'qr_scan_mode', mode == _ScanMode.lenDon ? 'lenDon' : 'chotDon');
+    final modeStr = mode == _ScanMode.lenDon
+        ? 'lenDon'
+        : mode == _ScanMode.tinNhan
+            ? 'tinNhan'
+            : 'chotDon';
+    await prefs.setString('qr_scan_mode', modeStr);
   }
 
   @override
@@ -116,6 +128,29 @@ class _QrScanScreenState extends State<QrScanScreen>
           'comment': rep,
           'chotComments': userChotComments,
         });
+      } else if (_mode == _ScanMode.tinNhan) {
+        final userid = customer.userid ?? '';
+        final pageid = customer.pageid ?? '';
+        if (userid.isEmpty || pageid.isEmpty) {
+          _showError('Khách hàng chưa có thông tin chat');
+          return;
+        }
+        Navigator.pop(context);
+        if (!mounted) return;
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ChatScreen(
+              sender: userid,
+              pageId: pageid,
+            ),
+          ),
+        ).then((_) {
+          if (mounted) {
+            setState(() => _scanned = false);
+            _scanAnim.repeat(reverse: true);
+          }
+        });
       } else {
         Navigator.pop(context);
         if (!mounted) return;
@@ -130,8 +165,7 @@ class _QrScanScreenState extends State<QrScanScreen>
               builder: (_) => CustomerDetailScreen(
                 customer: customer,
                 selectedLiveIds: liveIds,
-                liveComments:
-                    widget.liveComments, // truyền để QR lần sau còn có comments
+                liveComments: widget.liveComments,
               ),
             ));
       }
@@ -261,8 +295,6 @@ class _QrScanScreenState extends State<QrScanScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Tính vị trí frame dựa trên màn hình thực tế
-    // Toàn bộ UI nằm trong 1 Stack, overlay và corners dùng cùng coordinate
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -280,10 +312,6 @@ class _QrScanScreenState extends State<QrScanScreen>
         builder: (context, constraints) {
           final screenW = constraints.maxWidth;
           final screenH = constraints.maxHeight;
-
-          // Vị trí frame: căn giữa màn hình theo cả 2 chiều
-          // Column có mainAxisAlignment.center → tổng height của column = auto
-          // Mode switch height ~52px + margin 32 + frame 260 + padding 24 + text ~40 + 6 + 32 + button ~36
           const modeSwitchH = 52.0;
           const marginBelowMode = 32.0;
           const columnContentH = modeSwitchH +
@@ -302,7 +330,6 @@ class _QrScanScreenState extends State<QrScanScreen>
 
           return Stack(
             children: [
-              // Camera
               MobileScanner(
                 controller: _camCtrl,
                 onDetect: (capture) {
@@ -311,8 +338,6 @@ class _QrScanScreenState extends State<QrScanScreen>
                     _onQrDetected(barcode!.rawValue!);
                 },
               ),
-
-              // Overlay mờ — vẽ đúng vị trí frameRect
               Positioned.fill(
                 child: IgnorePointer(
                   child: CustomPaint(
@@ -320,11 +345,7 @@ class _QrScanScreenState extends State<QrScanScreen>
                   ),
                 ),
               ),
-
-              // Corners — vị trí tuyệt đối theo frameRect
               ..._buildCorners(frameRect),
-
-              // Scan line animation bên trong frame
               AnimatedBuilder(
                 animation: _scanLine,
                 builder: (_, __) => Positioned(
@@ -350,15 +371,12 @@ class _QrScanScreenState extends State<QrScanScreen>
                   ),
                 ),
               ),
-
-              // UI controls — nằm trên overlay
               Positioned.fill(
                 child: SafeArea(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Mode switch
                       Container(
                         margin: const EdgeInsets.only(bottom: marginBelowMode),
                         padding: const EdgeInsets.all(4),
@@ -370,22 +388,24 @@ class _QrScanScreenState extends State<QrScanScreen>
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             _modeBtn(_ScanMode.chotDon,
-                                Icons.shopping_cart_outlined, 'Chốt đơn'),
+                                Icons.shopping_cart_outlined, 'Chốt'),
                             const SizedBox(width: 4),
                             _modeBtn(_ScanMode.lenDon,
                                 Icons.local_shipping_outlined, 'Lên đơn'),
+                            const SizedBox(width: 4),
+                            _modeBtn(_ScanMode.tinNhan,
+                                Icons.chat_bubble_outline, 'Tin nhắn'),
                           ],
                         ),
                       ),
-
-                      // Frame placeholder (transparent — corners & scan line từ Stack)
                       const SizedBox(width: _frameSize, height: _frameSize),
-
                       const SizedBox(height: 24),
                       Text(
                         _mode == _ScanMode.chotDon
                             ? 'Quét ID khách → tìm đơn chốt trong live'
-                            : 'Quét ID khách → mở trang lên đơn',
+                            : _mode == _ScanMode.tinNhan
+                                ? 'Quét ID khách → mở chat'
+                                : 'Quét ID khách → mở trang lên đơn',
                         style: TextStyle(
                             color: Colors.white.withOpacity(0.7), fontSize: 13),
                         textAlign: TextAlign.center,

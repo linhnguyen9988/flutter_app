@@ -76,19 +76,18 @@ class CustomersScreenState extends State<CustomersScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Container(
             height: 36,
-            alignment:
-                Alignment.centerLeft, // Giữ TextField luôn ở giữa trục dọc
+            alignment: Alignment.centerLeft,
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               color: AppTheme.darkSurface,
-              borderRadius: BorderRadius.circular(10), // Bo góc chuẩn 10
+              borderRadius: BorderRadius.circular(10),
             ),
             child: TextField(
               controller: _searchCtrl,
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 14,
-                height: 1.0, // Quan trọng: Để chữ gọn, dễ căn giữa
+                height: 1.0,
               ),
               onChanged: (v) {
                 setState(() => _searchText = v);
@@ -136,12 +135,11 @@ class CustomersScreenState extends State<CustomersScreen> {
         bottom: _pages.isEmpty
             ? null
             : PreferredSize(
-                preferredSize: const Size.fromHeight(32), // Giảm hẳn xuống 32
+                preferredSize: const Size.fromHeight(32),
                 child: Transform.translate(
-                  offset: const Offset(
-                      0, -6), // Dùng cái này để "nhấc" cả cụm chip lên trên
+                  offset: const Offset(0, -6),
                   child: Container(
-                    height: 32, // Khớp với preferredSize
+                    height: 32,
                     child: ListView(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),

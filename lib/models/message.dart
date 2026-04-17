@@ -9,10 +9,10 @@ class Message {
   final int isRead;
   final int timestamp;
   final String? senderName;
-  // Reaction khách thả vào tin nhắn này (emoji string)
   final List<dynamic>? reactions;
-  // Timestamp khách đã đọc (watermark từ read event) — chỉ dùng để biết tin này đã được đọc
   bool readByCustomer;
+  bool isPending;
+  bool isFailed;
 
   Message({
     required this.id,
@@ -27,6 +27,8 @@ class Message {
     this.senderName,
     this.reactions,
     this.readByCustomer = false,
+    this.isPending = false,
+    this.isFailed = false,
   });
 
   factory Message.fromJson(Map<String, dynamic> j) => Message(
@@ -59,7 +61,6 @@ class Message {
   bool get hasImage => image != null && image!.isNotEmpty;
   bool get isUnread => isRead == 0;
 
-  // Tách nhiều link ảnh theo dấu ";" — lọc bỏ phần tử rỗng
   List<String> get imageList {
     if (image == null || image!.isEmpty) return [];
     return image!

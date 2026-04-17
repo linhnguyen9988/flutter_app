@@ -21,7 +21,6 @@ class _HomeScreenState extends State<HomeScreen>
     with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   int _currentIndex = 0;
 
-  // GlobalKeys để truy cập state của các screen
   final GlobalKey<ChotDonScreenState> _chotDonKey =
       GlobalKey<ChotDonScreenState>();
   final GlobalKey<OrdersScreenState> _ordersKey =
@@ -33,15 +32,13 @@ class _HomeScreenState extends State<HomeScreen>
 
   late final List<Widget> _screens;
 
-  // Thời điểm app vào background
   DateTime? _pausedAt;
   static const _reloadThreshold = Duration(seconds: 30);
 
-  // ── Connectivity ──────────────────────────────────────────────
   StreamSubscription<List<ConnectivityResult>>? _connectSub;
-  bool _isOnline = true; // trạng thái hiện tại
-  bool _showBanner = false; // đang hiện banner không
-  bool _bannerIsOnline = false; // banner đang báo online hay offline
+  bool _isOnline = true;
+  bool _showBanner = false;
+  bool _bannerIsOnline = false;
   Timer? _hideBannerTimer;
 
   late final AnimationController _bannerAnim;
@@ -83,11 +80,9 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _initConnectivity() async {
-    // Kiểm tra trạng thái ban đầu
     final results = await Connectivity().checkConnectivity();
     _isOnline = _hasConnection(results);
 
-    // Lắng nghe thay đổi
     _connectSub =
         Connectivity().onConnectivityChanged.listen(_onConnectivityChanged);
   }
@@ -97,7 +92,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _onConnectivityChanged(List<ConnectivityResult> results) {
     final online = _hasConnection(results);
-    if (online == _isOnline) return; // không thay đổi → bỏ qua
+    if (online == _isOnline) return;
 
     setState(() {
       _isOnline = online;
@@ -109,11 +104,9 @@ class _HomeScreenState extends State<HomeScreen>
     _hideBannerTimer?.cancel();
 
     if (online) {
-      // Có mạng lại → reload data + tự ẩn banner sau 3 giây
       _reloadAll();
       _hideBannerTimer = Timer(const Duration(seconds: 3), _hideBanner);
     }
-    // Mất mạng → banner ở lại cho đến khi có mạng trở lại
   }
 
   void _hideBanner() {
@@ -156,7 +149,6 @@ class _HomeScreenState extends State<HomeScreen>
     _ordersKey.currentState?.reload();
     _messagingKey.currentState?.reload();
     _customersKey.currentState?.reload();
-    // Broadcast tới tất cả detail screen đang mở trên Navigator stack
     ReloadService.instance.triggerReload();
   }
 
@@ -193,7 +185,6 @@ class _HomeScreenState extends State<HomeScreen>
       body: Stack(
         children: [
           IndexedStack(index: _currentIndex, children: _screens),
-          // Banner kết nối — trượt từ trên xuống
           if (_showBanner)
             Positioned(
               top: 0,
@@ -308,7 +299,6 @@ class _HomeScreenState extends State<HomeScreen>
   }
 }
 
-// ── Banner widget ─────────────────────────────────────────────
 class _ConnectivityBanner extends StatelessWidget {
   final bool isOnline;
   const _ConnectivityBanner({required this.isOnline});

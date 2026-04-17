@@ -8,7 +8,6 @@ import '../services/api_service.dart';
 import '../widgets/app_sidebar.dart';
 import 'chat_screen.dart';
 
-// Backend chính port 443
 const String _mainBackendUrl = 'https://aodaigiabao.com';
 
 class MessagingScreen extends StatefulWidget {
@@ -39,7 +38,6 @@ class MessagingScreenState extends State<MessagingScreen> {
     _connectSocket();
   }
 
-  // Public — gọi từ HomeScreen khi app resume
   void reload() => _loadMessages();
 
   @override
@@ -50,7 +48,6 @@ class MessagingScreenState extends State<MessagingScreen> {
     super.dispose();
   }
 
-  // ── Socket ────────────────────────────────────────────────────
   void _connectSocket() {
     _socket = IO.io(
       _mainBackendUrl,
@@ -68,7 +65,6 @@ class MessagingScreenState extends State<MessagingScreen> {
       if (mounted) setState(() => _socketConnected = false);
     });
 
-    // Nhận tin nhắn mới từ webhook Facebook
     _socket!.on('new-message', (data) {
       if (!mounted) return;
       final d = Map<String, dynamic>.from(data);
@@ -88,17 +84,14 @@ class MessagingScreenState extends State<MessagingScreen> {
     final image = d['messageImg']?.toString() ?? '';
     final ts = d['timestamp']?.toString() ?? '';
 
-    // is_echo = page gửi → khách là recipient; ngược lại khách là sender
     final khachId = isEcho ? recipientId : senderId;
     final pageId = isEcho ? senderId : recipientId;
-    // khach_userid: userid trong bảng khachhang (dùng avatar + làm key)
     final khachUserId = d['khach_userid']?.toString() ?? khachId;
     final picture = d['picture']?.toString() ?? '';
 
     if (khachUserId.isEmpty) return;
 
     setState(() {
-      // Tìm theo khach_userid — key ổn định, không bị nhầm khi reorder
       final idx = _conversations.indexWhere(
         (c) => (c['khach_userid']?.toString() ?? '') == khachUserId,
       );
@@ -120,12 +113,15 @@ class MessagingScreenState extends State<MessagingScreen> {
         if (label.isNotEmpty) existing['label'] = label;
         if (picture.isNotEmpty) existing['picture'] = picture;
         existing['khach_userid'] = khachUserId;
+        existing['sender'] = senderId;
+        existing['recipient'] = recipientId;
+        existing['pageid'] = pageId;
         _conversations.removeAt(idx);
         _conversations.insert(0, existing);
       } else {
         _conversations.insert(0, {
-          'sender': khachId,
-          'recipient': pageId,
+          'sender': senderId,
+          'recipient': recipientId,
           'khach_userid': khachUserId,
           'pageid': pageId,
           'is_echo': isEcho,
@@ -141,7 +137,6 @@ class MessagingScreenState extends State<MessagingScreen> {
     });
   }
 
-  // ── Load ──────────────────────────────────────────────────────
   Future<void> _loadMessages() async {
     setState(() {
       _loading = true;
@@ -173,7 +168,6 @@ class MessagingScreenState extends State<MessagingScreen> {
     }
   }
 
-  // ── Helpers ───────────────────────────────────────────────────
   String _displayName(Map<String, dynamic> c) =>
       (c['ten_khach'] ?? c['sender'] ?? '').toString();
 
@@ -189,14 +183,9 @@ class MessagingScreenState extends State<MessagingScreen> {
     return '$prefix$msg';
   }
 
-  // userid của khách trong bảng khachhang
-  // Backend cần trả field 'khach_userid' trong SELECT
-  // Thêm vào SQL: IF(t1.sender IN (?,?), t1.recipient, t1.sender) AS khach_userid
-  // is_echo: DB lưu 1/0, emit gửi true/false
   bool _isEcho(Map<String, dynamic> c) {
     final v = c['is_echo'];
     if (v == null) {
-      // Fallback: nếu sender == pageid → page gửi → is_echo
       final sender = c['sender']?.toString() ?? '';
       final pageid = c['pageid']?.toString() ?? '';
       if (pageid.isNotEmpty) return sender == pageid;
@@ -206,32 +195,20 @@ class MessagingScreenState extends State<MessagingScreen> {
   }
 
   String _khachUserId(Map<String, dynamic> c) {
-    // Ưu tiên khach_userid — field cố định từ DB và emit
     final uid = c['khach_userid']?.toString() ?? '';
     if (uid.isNotEmpty) return uid;
-    // Fallback: dùng is_echo
-    if (c.containsKey('is_echo') && c['is_echo'] != null) {
-      return _isEcho(c)
-          ? c['recipient']?.toString() ?? ''
-          : c['sender']?.toString() ?? '';
-    }
-    // Fallback cuối: so sánh sender vs pageid
-    final sender = c['sender']?.toString() ?? '';
-    final pageid = c['pageid']?.toString() ?? '';
-    if (pageid.isNotEmpty && sender == pageid) {
-      return c['recipient']?.toString() ?? '';
-    }
-    return sender;
+
+    final isEcho = _isEcho(c);
+    return isEcho
+        ? c['recipient']?.toString() ?? ''
+        : c['sender']?.toString() ?? '';
   }
 
-  // Avatar server: ava/{userid}.jpg
-  // userid = recipient nếu is_echo (page gửi), ngược lại = sender (khách gửi)
   String _avatarUrl(Map<String, dynamic> c) {
     final userid = _khachUserId(c);
     return 'https://aodaigiabao.com/images/ava/$userid.jpg';
   }
 
-  // picture từ Facebook (fallback khi ảnh server chưa kịp lưu)
   String _fbPicture(Map<String, dynamic> c) => c['picture']?.toString() ?? '';
 
   Color _labelColor(String? label) {
@@ -246,28 +223,24 @@ class MessagingScreenState extends State<MessagingScreen> {
     }
   }
 
-  // Tìm pageId: dùng field pageid nếu có, fallback recipient
   String _pageId(Map<String, dynamic> c) {
     if (c.containsKey('pageid') &&
         c['pageid'] != null &&
         c['pageid'].toString().isNotEmpty) {
       return c['pageid'].toString();
     }
-    // is_echo → sender là page, ngược lại recipient là page
-    if (c.containsKey('is_echo')) {
-      return _isEcho(c)
-          ? c['sender']?.toString() ?? ''
-          : c['recipient']?.toString() ?? '';
-    }
-    return c['recipient']?.toString() ?? '';
+    final isEcho = _isEcho(c);
+    return isEcho
+        ? c['sender']?.toString() ?? ''
+        : c['recipient']?.toString() ?? '';
   }
 
   String _formatTime(dynamic ts) {
     if (ts == null) return '';
     try {
+      final s = ts.toString().trim();
+      if (s.isEmpty) return '';
       DateTime dt;
-      final s = ts.toString();
-      // Nếu là timestamp số
       if (RegExp(r'^\d+$').hasMatch(s)) {
         final ms = int.parse(s);
         dt = DateTime.fromMillisecondsSinceEpoch(
@@ -277,17 +250,22 @@ class MessagingScreenState extends State<MessagingScreen> {
       }
       final now = DateTime.now();
       final diff = now.difference(dt);
-      if (diff.inMinutes < 1) return 'Vừa xong';
-      if (diff.inHours < 1) return '${diff.inMinutes}p';
-      if (diff.inDays < 1) return '${diff.inHours}h';
-      if (diff.inDays < 7) return '${diff.inDays}d';
-      return '${dt.day}/${dt.month}';
+      final sec = diff.inSeconds;
+      final min = diff.inMinutes;
+      final hrs = diff.inHours;
+      final days = diff.inDays;
+      if (sec < 60) return '$sec giây trước';
+      if (min < 60) return '$min phút trước';
+      if (hrs < 24) return '$hrs giờ trước';
+      if (days < 30) return '$days ngày trước';
+      final months = (days / 30.44).floor();
+      if (months < 12) return '$months tháng trước';
+      return '${(days / 365.25).floor()} năm trước';
     } catch (_) {
       return '';
     }
   }
 
-  // ── Build ──────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -357,7 +335,6 @@ class MessagingScreenState extends State<MessagingScreen> {
 
     return InkWell(
       onTap: () {
-        // Tìm lại theo khach_userid — key ổn định sau khi reorder
         final idx = _conversations.indexWhere(
           (x) => (x['khach_userid']?.toString() ?? '') == khachId,
         );
@@ -380,7 +357,6 @@ class MessagingScreenState extends State<MessagingScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
-            // Avatar: thử ava/{userid}.jpg, fallback sang FB picture nếu lỗi
             Stack(children: [
               _AvatarWithFallback(
                 primaryUrl: avaUrl,
@@ -444,7 +420,7 @@ class MessagingScreenState extends State<MessagingScreen> {
                       ]),
                     ),
                     Text(
-                      _formatTime(c['time']),
+                      _formatTime(c['timestamp'] ?? c['time']),
                       style: TextStyle(
                         color:
                             isNew ? AppTheme.primary : AppTheme.textSecondary,
@@ -513,7 +489,6 @@ class MessagingScreenState extends State<MessagingScreen> {
       ));
 }
 
-// Widget avatar tự fallback: thử primaryUrl trước, nếu lỗi dùng fallbackUrl (FB picture)
 class _AvatarWithFallback extends StatefulWidget {
   final String primaryUrl;
   final String fallbackUrl;
@@ -535,7 +510,6 @@ class _AvatarWithFallbackState extends State<_AvatarWithFallback> {
   @override
   void didUpdateWidget(_AvatarWithFallback old) {
     super.didUpdateWidget(old);
-    // Reset nếu URL thay đổi
     if (old.primaryUrl != widget.primaryUrl) {
       setState(() => _useFallback = false);
     }

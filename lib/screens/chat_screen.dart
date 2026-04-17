@@ -61,7 +61,6 @@ class _ChatScreenState extends State<ChatScreen> {
   String get _avatarUrl =>
       'https://aodaigiabao.com/images/ava/${widget.sender}.jpg';
 
-  // Fallback FB picture nếu ảnh server chưa kịp lưu
   String get _fbPicture => widget.avatarUrl ?? '';
 
   String get _displayName =>
@@ -94,7 +93,6 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    // Tự điền tin nhắn chốt đơn nếu có
     if (widget.initialMessage != null && widget.initialMessage!.isNotEmpty) {
       _replyCtrl.text = widget.initialMessage!;
     }
@@ -170,7 +168,6 @@ class _ChatScreenState extends State<ChatScreen> {
 
     _socket!.connect();
 
-    // Khách đã đọc tin của page
     _socket!.on('read', (data) {
       if (!mounted) return;
       final d = Map<String, dynamic>.from(data);
@@ -185,7 +182,6 @@ class _ChatScreenState extends State<ChatScreen> {
       }
     });
 
-    // Khách thả reaction vào tin của page
     _socket!.on('reaction', (data) {
       if (!mounted) return;
       final d = Map<String, dynamic>.from(data);
@@ -199,7 +195,6 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _loadCustomer() async {
     try {
-      // Tìm khách theo psid/userid
       final list = await ApiService.getCustomers(search: widget.sender);
       if (list.isNotEmpty && mounted) {
         setState(() => _customer = list.first);
@@ -238,7 +233,7 @@ class _ChatScreenState extends State<ChatScreen> {
         _loading = false;
         _hasMore = msgs.length == 10;
 
-        _reactions.clear(); // Xoá cũ cho chắc
+        _reactions.clear();
         if (result.reactions.isNotEmpty) {
           _reactions.addAll(result.reactions);
         }
@@ -247,7 +242,6 @@ class _ChatScreenState extends State<ChatScreen> {
             _reactions[m.messid] = m.reactions! as String;
           }
         }
-        // ------------------------------------------------
 
         if (result.readWatermark > _readWatermark) {
           _readWatermark = result.readWatermark;
@@ -269,39 +263,33 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() => _loadingMore = true);
     _offset += 10;
     try {
-      // Gọi API lấy thêm tin nhắn cũ kèm reaction và watermark
       final result = await ApiService.getConversation(widget.sender,
           limit: 10, offset: _offset);
 
       final msgs = result.messages
         ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
 
-      // Lưu vị trí cuộn hiện tại trước khi render tin nhắn mới
       final prevPixels =
           _scrollCtrl.hasClients ? _scrollCtrl.position.pixels : 0.0;
       final prevMaxExtent =
           _scrollCtrl.hasClients ? _scrollCtrl.position.maxScrollExtent : 0.0;
 
       setState(() {
-        // Nạp thêm reaction từ DB vào Map hiển thị để không bị thiếu icon
         if (result.reactions.isNotEmpty) {
           _reactions.addAll(result.reactions);
         }
 
-        // Thêm tin nhắn cũ vào đầu danh sách hiện tại
         _messages = [...msgs, ..._messages];
         _hasMore = msgs.length == 10;
         _loadingMore = false;
       });
 
-      // Sau khi Flutter vẽ lại UI, bù lại chiều cao để giữ nguyên vị trí nhìn của user
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || !_scrollCtrl.hasClients) return;
         final newMaxExtent = _scrollCtrl.position.maxScrollExtent;
         final addedHeight = newMaxExtent - prevMaxExtent;
         _scrollCtrl.jumpTo(prevPixels + addedHeight);
 
-        // Reset flag chờ ổn định
         Future.delayed(const Duration(milliseconds: 500), () {
           if (mounted) _isLoadingHistory = false;
         });
@@ -313,7 +301,6 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _scrollToBottom() {
-    // Dùng delay để chờ ảnh trong list render xong rồi mới scroll
     Future.delayed(const Duration(milliseconds: 400), () {
       if (!mounted || !_scrollCtrl.hasClients) return;
       _scrollCtrl.jumpTo(_scrollCtrl.position.maxScrollExtent);
@@ -338,6 +325,27 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() => _sending = true);
 
     final imageFile = _pickedImage;
+    final ts = DateTime.now().millisecondsSinceEpoch;
+    final localId = 'local_$ts';
+
+    final pendingMsg = Message(
+      id: 0,
+      messid: localId,
+      sender: widget.pageId,
+      recipient: widget.sender,
+      message: text.isNotEmpty ? text : null,
+      image: imageFile?.path,
+      time: DateTime.now().toIso8601String(),
+      isRead: 1,
+      timestamp: ts,
+      isPending: true,
+    );
+    setState(() {
+      _messages.add(pendingMsg);
+      _pickedImage = null;
+      _replyCtrl.clear();
+    });
+    _scrollToBottom();
 
     try {
       final ok = await ApiService.sendMessage(
@@ -346,42 +354,66 @@ class _ChatScreenState extends State<ChatScreen> {
         pageId: widget.pageId,
         imageFile: imageFile,
       );
-      if (ok) {
-        _replyCtrl.clear();
-        if (mounted) {
-          setState(() {
-            _pickedImage = null;
-            // Optimistic update — hiện ngay cho user thấy, socket echo sẽ cập nhật sau
-            final ts = DateTime.now().millisecondsSinceEpoch;
-            _messages.add(Message(
-              id: 0,
-              messid: 'local_$ts',
-              sender: widget.pageId,
-              recipient: widget.sender,
-              message: text.isNotEmpty ? text : null,
-              image: imageFile?.path, // null nếu chỉ gửi chữ
-              time: DateTime.now().toIso8601String(),
-              isRead: 1,
-              timestamp: ts,
-            ));
-          });
-          _scrollToBottom();
-        }
-      } else {
-        _showError('Gửi thất bại');
+      if (mounted) {
+        setState(() {
+          final idx = _messages.indexWhere((m) => m.messid == localId);
+          if (idx >= 0) {
+            if (ok) {
+              _messages[idx] = Message(
+                id: 0,
+                messid: localId,
+                sender: pendingMsg.sender,
+                recipient: pendingMsg.recipient,
+                message: pendingMsg.message,
+                image: pendingMsg.image,
+                time: pendingMsg.time,
+                isRead: 1,
+                timestamp: ts,
+                isPending: false,
+                isFailed: false,
+              );
+            } else {
+              _messages[idx] = Message(
+                id: 0,
+                messid: localId,
+                sender: pendingMsg.sender,
+                recipient: pendingMsg.recipient,
+                message: pendingMsg.message,
+                image: pendingMsg.image,
+                time: pendingMsg.time,
+                isRead: 1,
+                timestamp: ts,
+                isPending: false,
+                isFailed: true,
+              );
+            }
+          }
+        });
       }
     } catch (_) {
-      _showError('Lỗi kết nối');
+      if (mounted) {
+        setState(() {
+          final idx = _messages.indexWhere((m) => m.messid == localId);
+          if (idx >= 0) {
+            _messages[idx] = Message(
+              id: 0,
+              messid: localId,
+              sender: pendingMsg.sender,
+              recipient: pendingMsg.recipient,
+              message: pendingMsg.message,
+              image: pendingMsg.image,
+              time: pendingMsg.time,
+              isRead: 1,
+              timestamp: ts,
+              isPending: false,
+              isFailed: true,
+            );
+          }
+        });
+      }
     } finally {
       if (mounted) setState(() => _sending = false);
     }
-  }
-
-  void _showError(String msg) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: Colors.red),
-    );
   }
 
   @override
@@ -392,7 +424,6 @@ class _ChatScreenState extends State<ChatScreen> {
         titleSpacing: 0,
         title: Row(
           children: [
-            // Avatar: thử ava/{userid}.jpg, fallback FB picture nếu lỗi
             _AvatarWithFallback(
               primaryUrl: _avatarUrl,
               fallbackUrl: _fbPicture,
@@ -522,7 +553,6 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                         ),
             ),
-            // Preview ảnh đã chọn
             if (_pickedImage != null) _buildImagePreview(),
             _buildReplyBar(),
           ],
@@ -561,14 +591,12 @@ class _ChatScreenState extends State<ChatScreen> {
               children: [
                 if (images.isNotEmpty)
                   ...images.map((path) {
-                    // Kiểm tra like trước tiên — bất kể path dạng gì
                     if (path.toLowerCase().contains('like')) {
                       return const Padding(
                         padding: EdgeInsets.only(bottom: 4),
                         child: Text('👍', style: TextStyle(fontSize: 30)),
                       );
                     }
-                    // path local (ảnh vừa gửi chưa có URL server)
                     if (!path.startsWith('http')) {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 4),
@@ -647,7 +675,6 @@ class _ChatScreenState extends State<ChatScreen> {
                                   color: Colors.white, fontSize: 14)),
                         ),
                       ),
-                      // Reaction emoji khách thả — góc dưới trái bubble
                       if (reaction != null)
                         Positioned(
                           bottom: -10,
@@ -668,10 +695,24 @@ class _ChatScreenState extends State<ChatScreen> {
                     ],
                   ),
                 SizedBox(height: reaction != null ? 14 : 2),
-                // Timestamp + avatar đã đọc
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    if (!isIncoming && msg.isPending) ...[
+                      const SizedBox(
+                        width: 10,
+                        height: 10,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 1.5,
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(width: 3),
+                    ] else if (!isIncoming && msg.isFailed) ...[
+                      const Icon(Icons.error_outline,
+                          size: 11, color: Colors.red),
+                      const SizedBox(width: 3),
+                    ],
                     Text(_formatTime(msg.dateTime),
                         style: const TextStyle(
                             color: AppTheme.textSecondary, fontSize: 8)),
@@ -762,7 +803,6 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       child: Row(
         children: [
-          // Camera + Gallery sát nhau
           GestureDetector(
             onTap: _pickFromCamera,
             child: const Padding(
@@ -789,26 +829,16 @@ class _ChatScreenState extends State<ChatScreen> {
                 hintText: 'Nhập tin nhắn...',
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                suffixIcon: _sending
-                    ? const Padding(
-                        padding: EdgeInsets.all(10),
-                        child: SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: AppTheme.primary)),
-                      )
-                    : GestureDetector(
-                        onTap: _sendReply,
-                        child: Icon(
-                          Icons.send_rounded,
-                          size: 20,
-                          color: (_replyCtrl.text.isNotEmpty ||
-                                  _pickedImage != null)
-                              ? AppTheme.primary
-                              : AppTheme.textSecondary,
-                        ),
-                      ),
+                suffixIcon: GestureDetector(
+                  onTap: _sendReply,
+                  child: Icon(
+                    Icons.send_rounded,
+                    size: 20,
+                    color: (_replyCtrl.text.isNotEmpty || _pickedImage != null)
+                        ? AppTheme.primary
+                        : AppTheme.textSecondary,
+                  ),
+                ),
               ),
               textInputAction: TextInputAction.newline,
               onChanged: (_) => setState(() {}),
@@ -839,7 +869,6 @@ class _ChatScreenState extends State<ChatScreen> {
       '${dt.day}/${dt.month}/${dt.year}';
 }
 
-// Widget avatar tự fallback: thử primaryUrl trước, nếu lỗi dùng fallbackUrl (FB picture)
 class _AvatarWithFallback extends StatefulWidget {
   final String primaryUrl;
   final String fallbackUrl;

@@ -55,8 +55,6 @@ class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
       final logs =
           await ApiService.getOrderLogs(widget.order.realorderid ?? '');
 
-      // Cùng timestamp + code < 500: sort code nhỏ trước, lớn sau
-      // (code lớn hơn = trạng thái đến sau = hiện cuối = index 0 trong list DESC)
       logs.sort((a, b) {
         final timeA = a['status_date_raw']?.toString() ??
             a['created_at']?.toString() ??
@@ -64,13 +62,10 @@ class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
         final timeB = b['status_date_raw']?.toString() ??
             b['created_at']?.toString() ??
             '';
-        if (timeA != timeB)
-          return 0; // giữ nguyên thứ tự từ backend nếu khác timestamp
+        if (timeA != timeB) return 0;
         final codeA = (a['status_code'] as int?) ?? 0;
         final codeB = (b['status_code'] as int?) ?? 0;
-        if (codeA >= 500 || codeB >= 500) return 0; // không sort nếu >= 500
-        // List từ backend là DESC (mới nhất trên đầu)
-        // Cùng timestamp: code lớn hơn phải đứng TRƯỚC (index nhỏ hơn = trên timeline)
+        if (codeA >= 500 || codeB >= 500) return 0;
         return codeB.compareTo(codeA);
       });
 
@@ -163,12 +158,10 @@ class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Timeline line + dot
           SizedBox(
             width: 40,
             child: Column(
               children: [
-                // Đường trên
                 if (!isFirst)
                   Expanded(
                     child: Container(
@@ -178,7 +171,6 @@ class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
                   )
                 else
                   const SizedBox(height: 8),
-                // Dot
                 Container(
                   width: isFirst ? 14 : 10,
                   height: isFirst ? 14 : 10,
@@ -199,7 +191,6 @@ class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
                         : null,
                   ),
                 ),
-                // Đường dưới
                 if (!isLast)
                   Expanded(
                     child: Container(width: 2, color: AppTheme.darkSurface),
@@ -210,7 +201,6 @@ class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
             ),
           ),
           const SizedBox(width: 12),
-          // Content
           Expanded(
             child: Padding(
               padding: EdgeInsets.only(
@@ -229,7 +219,6 @@ class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Trạng thái
                     Text(
                       statusName,
                       style: TextStyle(
@@ -239,12 +228,10 @@ class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    // Thời gian
                     if (date.isNotEmpty)
                       Text(date,
                           style: TextStyle(
                               color: AppTheme.textSecondary, fontSize: 12)),
-                    // Địa điểm
                     if (location.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Row(children: [
@@ -258,7 +245,6 @@ class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
                                     fontSize: 12))),
                       ]),
                     ],
-                    // Nhân viên + SĐT badge
                     if (employee.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Row(
@@ -289,7 +275,6 @@ class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
                         ],
                       ),
                     ],
-                    // Ghi chú
                     if (note.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Text(note,

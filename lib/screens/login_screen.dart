@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:provider/provider.dart';
-// Lưu ý: Thay đổi 'ao_dai_gia_bao' bằng tên project của bạn trong pubspec.yaml
 import 'package:ao_dai_gia_bao/services/auth_service.dart';
 import 'package:ao_dai_gia_bao/services/notification_service.dart';
 import 'package:ao_dai_gia_bao/theme/app_theme.dart';
@@ -148,7 +147,6 @@ class _LoginScreenState extends State<LoginScreen>
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // --- PHẦN LOGO MỚI ---
                     Center(
                       child: Column(
                         children: [
@@ -196,8 +194,6 @@ class _LoginScreenState extends State<LoginScreen>
                       ),
                     ),
                     const SizedBox(height: 48),
-
-                    // Username
                     _buildLabel('Tên đăng nhập'),
                     const SizedBox(height: 8),
                     TextField(
@@ -211,8 +207,6 @@ class _LoginScreenState extends State<LoginScreen>
                       ),
                     ),
                     const SizedBox(height: 20),
-
-                    // Password
                     _buildLabel('Mật khẩu'),
                     const SizedBox(height: 8),
                     TextField(
@@ -237,8 +231,6 @@ class _LoginScreenState extends State<LoginScreen>
                       ),
                     ),
                     const SizedBox(height: 16),
-
-                    // Error message
                     if (_error.isNotEmpty)
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
@@ -263,10 +255,7 @@ class _LoginScreenState extends State<LoginScreen>
                           ],
                         ),
                       ),
-
                     const SizedBox(height: 28),
-
-                    // Login button
                     SizedBox(
                       height: 56,
                       child: ElevatedButton(
@@ -299,7 +288,6 @@ class _LoginScreenState extends State<LoginScreen>
                               ),
                       ),
                     ),
-                    // Biometric button
                     if (_biometricAvailable) ...[
                       const SizedBox(height: 16),
                       GestureDetector(
@@ -326,7 +314,6 @@ class _LoginScreenState extends State<LoginScreen>
                       ),
                     ],
                     const SizedBox(height: 40),
-
                     Center(
                       child: Text(
                         'ADGB Version 1.0.0',

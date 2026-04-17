@@ -22,7 +22,6 @@ class ApiService {
         if (_token.isNotEmpty) 'Authorization': 'Bearer $_token',
       };
 
-  // ─── MESSAGING ────────────────────────────────────────────────
   static Future<List<Message>> getMessages({
     String? sender,
     String? pageId,
@@ -44,7 +43,6 @@ class ApiService {
     throw Exception('Lỗi tải tin nhắn: ${res.statusCode}');
   }
 
-  // Lấy conversation + readWatermark + reactions trong 1 request
   static Future<
           ({
             List<Message> messages,
@@ -57,8 +55,6 @@ class ApiService {
     final res = await http.get(uri, headers: _headers);
     if (res.statusCode == 200) {
       final body = json.decode(res.body);
-      // Backend mới trả object {messages, readWatermark, reactions}
-      // Backend cũ trả array thẳng — fallback để tương thích
       if (body is List) {
         return (
           messages: body.map((e) => Message.fromJson(e)).toList(),
@@ -79,7 +75,6 @@ class ApiService {
     throw Exception('Lỗi tải cuộc hội thoại');
   }
 
-  // Gửi tin nhắn — hỗ trợ cả text và ảnh (multipart/form-data)
   static Future<bool> sendMessage({
     required String recipient,
     required String message,
@@ -89,7 +84,6 @@ class ApiService {
     final uri = Uri.parse('$baseUrl/messages/send');
     final request = http.MultipartRequest('POST', uri);
 
-    // Auth header
     if (_token.isNotEmpty) {
       request.headers['Authorization'] = 'Bearer $_token';
     }
@@ -115,7 +109,6 @@ class ApiService {
     return res.statusCode == 200;
   }
 
-  // Batch mark as read — 1 request thay vì N requests
   static Future<void> markAllAsRead(List<int> ids) async {
     if (ids.isEmpty) return;
     try {
@@ -124,7 +117,6 @@ class ApiService {
     } catch (_) {}
   }
 
-  // ─── LIVESTREAMS ──────────────────────────────────────────────
   static Future<List<Map<String, dynamic>>> getRecentLivestreams(
       {int limit = 5}) async {
     final uri = Uri.parse('$baseUrl/livecomments/livestreams?limit=$limit');
@@ -136,11 +128,10 @@ class ApiService {
     throw Exception('Lỗi tải livestreams');
   }
 
-  // ─── LIVE COMMENTS ────────────────────────────────────────────
   static Future<List<LiveComment>> getLiveComments({
     String? liveId,
     String? pageId,
-    int? limit, // null = load hết, không giới hạn
+    int? limit,
     int offset = 0,
   }) async {
     final params = <String, String>{
@@ -159,7 +150,6 @@ class ApiService {
     throw Exception('Lỗi tải bình luận live');
   }
 
-  // ─── CUSTOMERS ────────────────────────────────────────────────
   static Future<List<Customer>> getCustomers({
     String? pageId,
     String? search,
@@ -195,24 +185,16 @@ class ApiService {
     return res.statusCode == 200;
   }
 
-  // ─── ORDERS ───────────────────────────────────────────────────
-  // POST /getuserorder — lấy đơn hàng theo userid (psid khách)
-  // Backend trả { success: true, data: [...] }, ORDER BY ID DESC LIMIT 3
-
-  // Sort đơn hàng: time DESC, cùng time thì statuscode < 500 lớn hơn lên trước
   static List<Order> _sortOrders(List<Order> orders) {
     orders.sort((a, b) {
-      // So sánh time trước
       final tA = a.time ?? a.date ?? '';
       final tB = b.time ?? b.date ?? '';
       final timeCmp = tB.compareTo(tA); // DESC
       if (timeCmp != 0) return timeCmp;
-      // Cùng time: statuscode < 500 → lớn hơn = mới hơn → lên trước
       final cA = a.statuscode ?? 0;
       final cB = b.statuscode ?? 0;
-      if (cA < 500 && cB < 500)
-        return cB.compareTo(cA); // cả 2 < 500: lớn hơn trước
-      return cB.compareTo(cA); // mặc định cũng lớn hơn trước
+      if (cA < 500 && cB < 500) return cB.compareTo(cA);
+      return cB.compareTo(cA);
     });
     return orders;
   }
@@ -282,7 +264,6 @@ class ApiService {
     throw Exception('Lỗi tải hành trình đơn');
   }
 
-  // ─── PAGES ────────────────────────────────────────────────────
   static Future<List<PageInfo>> getPages() async {
     final uri = Uri.parse('$baseUrl/pages');
     final res = await http.get(uri, headers: _headers);
@@ -293,9 +274,6 @@ class ApiService {
     throw Exception('Lỗi tải danh sách page');
   }
 
-  // ─── LẤY PAGEID CỦA KHÁCH THEO USERID ───────────────────────
-  // Backend cần route: GET /api/customers/pageid/:userid
-  // Trả về { pageid: '...' }
   static Future<String> getPageIdByUserid(String userid) async {
     try {
       final uri = Uri.parse('$baseUrl/customers/pageid/$userid');
@@ -308,10 +286,6 @@ class ApiService {
     return '';
   }
 
-  // ─── CHECK KHÁCH CHỐT TRONG LIVE ─────────────────────────────
-  // POST /api/livecomments/customer-chots
-  // Body: { userid, liveIds: [...] }
-  // Trả về: { chots: [ { liveId, chot, slchot, liveName? }, ... ] }
   static Future<List<Map<String, dynamic>>> getCustomerLiveChots({
     required String userid,
     required List<String> liveIds,
@@ -333,7 +307,6 @@ class ApiService {
     return [];
   }
 
-  // ─── GENERIC POST (dùng cho backend chính) ───────────────────
   static Future<Map<String, dynamic>?> postRaw(
       String url, Map<String, dynamic> body) async {
     try {

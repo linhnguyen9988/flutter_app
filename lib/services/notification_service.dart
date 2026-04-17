@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -7,11 +8,8 @@ import '../models/order.dart';
 import '../screens/order_detail_screen.dart';
 import 'api_service.dart';
 
-// Handler chạy khi app bị kill — phải là top-level function
 @pragma('vm:entry-point')
-Future<void> _firebaseBackgroundHandler(RemoteMessage message) async {
-  // FCM tự hiện notification khi app bị kill, không cần làm gì thêm
-}
+Future<void> _firebaseBackgroundHandler(RemoteMessage message) async {}
 
 class NotificationService {
   NotificationService._();
@@ -19,6 +17,12 @@ class NotificationService {
   static final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
   static bool _initialized = false;
+
+  // Stream để broadcast noti mới đến các screen đang mở
+  static final StreamController<Map<String, dynamic>> _newNotiController =
+      StreamController<Map<String, dynamic>>.broadcast();
+  static Stream<Map<String, dynamic>> get onNewNoti =>
+      _newNotiController.stream;
   static GlobalKey<NavigatorState>? navigatorKey;
 
   static const _androidChannel = AndroidNotificationChannel(
@@ -29,12 +33,10 @@ class NotificationService {
     playSound: true,
   );
 
-  // ── Init ─────────────────────────────────────────────────────
   static Future<void> init() async {
     if (_initialized) return;
     _initialized = true;
 
-    // 1. Local notifications (hiện khi foreground)
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosInit = DarwinInitializationSettings(
       requestAlertPermission: true,
@@ -50,7 +52,6 @@ class NotificationService {
             AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(_androidChannel);
 
-    // 2. FCM
     FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundHandler);
 
     await FirebaseMessaging.instance.requestPermission(
@@ -59,24 +60,29 @@ class NotificationService {
       sound: true,
     );
 
-    // Lấy token gửi lên server
     await _uploadFcmToken();
     FirebaseMessaging.instance.onTokenRefresh.listen(_saveFcmToken);
 
-    // Foreground — hiện local notification
     FirebaseMessaging.onMessage.listen((message) {
       final title = message.notification?.title ?? message.data['title'] ?? '';
       final body = message.notification?.body ?? message.data['body'] ?? '';
-      if (title.isNotEmpty)
+      if (title.isNotEmpty) {
         _show(title, body, message.data.isNotEmpty ? message.data : null);
+        // Broadcast noti mới để các screen đang mở cập nhật realtime
+        _newNotiController.add({
+          'title': title,
+          'body': body,
+          'is_read': 0,
+          'created_at': DateTime.now().toIso8601String(),
+          ...message.data,
+        });
+      }
     });
 
-    // Background — user tap noti
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
       _handleFcmTap(message.data);
     });
 
-    // Killed — user tap noti mở app
     final initial = await FirebaseMessaging.instance.getInitialMessage();
     if (initial != null) {
       Future.delayed(const Duration(milliseconds: 500), () {
@@ -85,7 +91,6 @@ class NotificationService {
     }
   }
 
-  // ── FCM Token ────────────────────────────────────────────────
   static Future<void> _uploadFcmToken() async {
     try {
       final token = await FirebaseMessaging.instance.getToken();
@@ -105,12 +110,22 @@ class NotificationService {
     } catch (_) {}
   }
 
-  // ── Hiện local notification (foreground) ─────────────────────
+  static Future<void> cancelByNotiId(String notiId) async {
+    final idInt = int.tryParse(notiId);
+    if (idInt != null) await _plugin.cancel(idInt);
+  }
+
+  static Future<void> cancelAll() => _plugin.cancelAll();
+
   static int _notifId = 0;
 
   static Future<void> _show(String title, String body, dynamic extra) async {
+    int notifId = _notifId++;
+    if (extra is Map && extra['noti_id'] != null) {
+      notifId = int.tryParse(extra['noti_id'].toString()) ?? notifId;
+    }
     await _plugin.show(
-      _notifId++,
+      notifId,
       title,
       body,
       NotificationDetails(
@@ -132,7 +147,6 @@ class NotificationService {
     );
   }
 
-  // ── Navigate khi tap ─────────────────────────────────────────
   static void _onTap(NotificationResponse r) {
     if (r.payload == null || r.payload!.isEmpty) return;
     try {
@@ -145,10 +159,10 @@ class NotificationService {
     final realorderid = data['realorderid']?.toString() ?? '';
     if (realorderid.isEmpty) return;
 
-    // Đánh dấu đã đọc nếu có noti_id trong payload
     final notiId = data['noti_id']?.toString() ?? '';
     if (notiId.isNotEmpty && ApiService.token.isNotEmpty) {
       _markReadById(notiId);
+      cancelByNotiId(notiId);
     }
 
     final statusRaw = data['status'];
@@ -167,16 +181,15 @@ class NotificationService {
   static Future<void> _markReadById(String id) async {
     try {
       await http.post(
-        Uri.parse('\${ApiService.baseUrl}/notifications/\$id/read'),
+        Uri.parse('${ApiService.baseUrl}/notifications/$id/read'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer \${ApiService.token}',
+          'Authorization': 'Bearer ${ApiService.token}',
         },
       );
     } catch (_) {}
   }
 
-  // ── Lifecycle ────────────────────────────────────────────────
   static void dispose() {
     _initialized = false;
   }

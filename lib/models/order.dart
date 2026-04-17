@@ -110,7 +110,6 @@ class Order {
     return statusMap[statuscode!] ?? statustext ?? 'Mã $statuscode';
   }
 
-  // Màu theo nhóm trạng thái
   static Color statusColor(int? code) {
     if (code == null) return const Color(0xFFB0B3B8);
     if (code == 501)

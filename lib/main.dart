@@ -8,7 +8,6 @@ import 'services/notification_service.dart';
 import 'services/reload_service.dart';
 import 'theme/app_theme.dart';
 
-/// RouteObserver toàn app — dùng để các screen đăng ký RouteAware
 final RouteObserver<ModalRoute<void>> routeObserver =
     RouteObserver<ModalRoute<void>>();
 

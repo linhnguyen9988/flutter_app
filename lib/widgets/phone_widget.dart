@@ -3,11 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_theme.dart';
 
-/// Widget hiển thị số điện thoại — bấm vào có 2 option: Gọi hoặc Copy
 class PhoneWidget extends StatelessWidget {
   final String phone;
   final TextStyle? style;
-  final Widget? prefix; // icon hoặc emoji trước số
+  final Widget? prefix;
 
   const PhoneWidget({
     super.key,
@@ -47,7 +46,6 @@ class PhoneWidget extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Row(
                 children: [
-                  // Nút Gọi
                   Expanded(
                     child: ElevatedButton.icon(
                       icon: const Icon(Icons.phone, size: 18),
@@ -69,7 +67,6 @@ class PhoneWidget extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // Nút Copy
                   Expanded(
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.copy, size: 18),

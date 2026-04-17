@@ -10,7 +10,7 @@ class AuthService extends ChangeNotifier {
   static const _keyUser = 'auth_user';
   static const _keyBiometric = 'biometric_enabled';
   static const _keyUsername = 'saved_username';
-  static const _keyPassword = 'saved_password'; // lưu mã hóa nhẹ để biometric
+  static const _keyPassword = 'saved_password';
 
   String? _token;
   Map<String, dynamic>? _user;
@@ -18,8 +18,6 @@ class AuthService extends ChangeNotifier {
   String? get token => _token;
   Map<String, dynamic>? get user => _user;
   bool get isLoggedIn => _token != null;
-
-  // ── Auto login ───────────────────────────────────────────────
   Future<bool> tryAutoLogin() async {
     final prefs = await SharedPreferences.getInstance();
     final savedToken = prefs.getString(_keyToken);
@@ -35,7 +33,6 @@ class AuthService extends ChangeNotifier {
     return false;
   }
 
-  // ── Login thường ─────────────────────────────────────────────
   Future<String?> login(String username, String password) async {
     try {
       final uri = Uri.parse('${ApiService.baseUrl}/auth/login');
@@ -54,10 +51,9 @@ class AuthService extends ChangeNotifier {
         await prefs.setString(_keyToken, _token!);
         await prefs.setString(_keyUser, json.encode(_user));
         await prefs.setString(_keyUsername, username);
-        await prefs.setString(
-            _keyPassword, password); // cần cho biometric re-login
+        await prefs.setString(_keyPassword, password);
         notifyListeners();
-        return null; // null = success
+        return null;
       }
       return data['message'] ?? 'Đăng nhập thất bại';
     } catch (_) {
@@ -65,7 +61,6 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  // ── Biometric ────────────────────────────────────────────────
   Future<bool> isBiometricEnabled() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(_keyBiometric) ?? false;
@@ -76,7 +71,6 @@ class AuthService extends ChangeNotifier {
     await prefs.setBool(_keyBiometric, value);
   }
 
-  /// Xác thực sinh trắc rồi tự đăng nhập lại bằng credentials đã lưu
   Future<String?> loginWithBiometric() async {
     try {
       final localAuth = LocalAuthentication();
@@ -97,7 +91,6 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  // ── Đổi mật khẩu ────────────────────────────────────────────
   Future<String?> changePassword(String oldPass, String newPass) async {
     try {
       final uri = Uri.parse('${ApiService.baseUrl}/auth/change-password');
@@ -111,7 +104,6 @@ class AuthService extends ChangeNotifier {
       );
       final data = json.decode(res.body);
       if (res.statusCode == 200 && data['success'] == true) {
-        // Cập nhật password đã lưu cho biometric
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString(_keyPassword, newPass);
         return null;
@@ -122,7 +114,6 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  // ── Logout ───────────────────────────────────────────────────
   Future<void> logout() async {
     _token = null;
     _user = null;
@@ -130,7 +121,6 @@ class AuthService extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_keyToken);
     await prefs.remove(_keyUser);
-    // Giữ _keyUsername, _keyPassword, _keyBiometric để login lại bằng biometric
     notifyListeners();
   }
 }

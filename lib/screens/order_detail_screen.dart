@@ -20,8 +20,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
   late Order _order;
   bool _saving = false;
   bool _loadingOrder = false;
-  String _pageId = ''; // load từ khachhang theo userid
-  String _lastNote = ''; // note từ log cuối cùng
+  String _pageId = '';
+  String _lastNote = '';
 
   @override
   void onReload() => _loadOrderByRealId();
@@ -30,7 +30,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
   void initState() {
     super.initState();
     _order = widget.order;
-    // Nếu order chỉ có realorderid (từ notification), load đầy đủ từ API
     if (_order.id == 0 && (_order.realorderid?.isNotEmpty == true)) {
       _loadOrderByRealId();
     } else {
@@ -70,8 +69,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
     try {
       final logs = await ApiService.getOrderLogs(realId);
       if (mounted && logs.isNotEmpty) {
-        // Log đã sort DESC → logs[0] là trạng thái mới nhất
-        // Lấy note của log mới nhất (dù rỗng cũng dùng, không tìm log khác)
         final latestNote = logs.first['note']?.toString().trim() ?? '';
         if (latestNote.isNotEmpty) setState(() => _lastNote = latestNote);
       }
@@ -79,7 +76,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
   }
 
   Future<void> _cancelOrder() async {
-    // Xác nhận trước khi hủy
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
@@ -130,7 +126,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(msg), backgroundColor: Colors.red.shade700),
       );
-      // Cập nhật trạng thái local sang 107 - Đã hủy
       setState(() => _order = Order(
             id: _order.id,
             name: _order.name,
@@ -178,7 +173,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
       appBar: AppBar(
         title: const Text('Chi tiết đơn hàng'),
         actions: [
-          // Nút nhắn tin khách
           if (_order.userid != null && _order.userid!.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.chat_bubble_outline, size: 20),
@@ -212,7 +206,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Status badge — bấm vào xem timeline
                   GestureDetector(
                     onTap: () => Navigator.push(
                         context,
@@ -269,7 +262,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                     ),
                   ),
                   const SizedBox(height: 20),
-
                   _sectionTitle('Thông tin người nhận'),
                   _infoCard(children: [
                     _infoRow('Tên', _order.name ?? '-', copyable: true),
@@ -279,7 +271,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                     _infoRow('Địa chỉ', _order.address ?? '-'),
                   ]),
                   const SizedBox(height: 16),
-
                   _sectionTitle('Thông tin vận chuyển'),
                   _infoCard(children: [
                     _infoRow('Mã đơn', _order.realorderid ?? '-',
@@ -291,7 +282,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                         'Cập nhật cuối', _formatDateTime(_order.lastUpdate)),
                   ]),
                   const SizedBox(height: 16),
-
                   _sectionTitle('Thông tin giao hàng'),
                   _infoCard(children: [
                     _infoRow('COD', _order.codFormatted,
@@ -308,8 +298,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                     ],
                   ]),
                   const SizedBox(height: 16),
-
-                  // Hiện note của trạng thái cuối cùng từ order_logs
                   if (_lastNote.isNotEmpty) ...[
                     _sectionTitle('Ghi chú trạng thái'),
                     Container(
@@ -325,7 +313,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                     ),
                     const SizedBox(height: 20),
                   ],
-                  // Nút hủy đơn — chỉ hiện khi statuscode < 107
                   if ((_order.statuscode ?? 999) < 107) ...[
                     const SizedBox(height: 8),
                     SizedBox(
@@ -351,7 +338,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                 ],
               ),
             ),
-    ); // end SingleChildScrollView + ternary
+    );
   }
 
   String _formatDateTime(String? raw) {

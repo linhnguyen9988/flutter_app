@@ -82,7 +82,6 @@ class _AppSidebarState extends State<AppSidebar> {
     final auth = context.read<AuthService>();
     if (value) {
       try {
-        // Kiểm tra thiết bị có thực sự hỗ trợ không
         final enrolled = await _localAuth.getAvailableBiometrics();
         if (enrolled.isEmpty) {
           if (mounted) {
@@ -127,7 +126,6 @@ class _AppSidebarState extends State<AppSidebar> {
       context,
       MaterialPageRoute(builder: (_) => const NotificationScreen()),
     );
-    // Reload badge sau khi quay lại từ màn hình thông báo
     _loadUnreadCount();
   }
 
@@ -158,7 +156,6 @@ class _AppSidebarState extends State<AppSidebar> {
           child: SafeArea(
             child: Column(
               children: [
-                // ── Header tài khoản ──────────────────────────
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
@@ -210,10 +207,7 @@ class _AppSidebarState extends State<AppSidebar> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 8),
-
-                // ── Menu items ────────────────────────────────
                 if (_biometricAvailable)
                   _SidebarTile(
                     icon: Icons.fingerprint,
@@ -225,23 +219,18 @@ class _AppSidebarState extends State<AppSidebar> {
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                   ),
-
                 _SidebarTile(
                   icon: Icons.notifications_outlined,
                   label: 'Thông báo',
                   onTap: _showNotifications,
                   badge: _unreadCount,
                 ),
-
                 _SidebarTile(
                   icon: Icons.lock_outline,
                   label: 'Đổi mật khẩu',
                   onTap: _showChangePassword,
                 ),
-
                 const Spacer(),
-
-                // ── Đăng xuất ─────────────────────────────────
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   child: GestureDetector(
@@ -307,7 +296,6 @@ class _SidebarTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Row(
           children: [
-            // Icon với chấm đỏ nhỏ khi có badge
             Stack(
               clipBehavior: Clip.none,
               children: [
@@ -338,7 +326,6 @@ class _SidebarTile extends StatelessWidget {
                       fontSize: 15,
                     ),
                   ),
-                  // Badge số ngay sau chữ label
                   if (badge > 0) ...[
                     const SizedBox(width: 8),
                     Container(
@@ -377,7 +364,6 @@ class _SidebarTile extends StatelessWidget {
   }
 }
 
-// ── Dialog đổi mật khẩu ───────────────────────────────────────
 class _ChangePasswordSheet extends StatefulWidget {
   static void show(BuildContext context) {
     showModalBottomSheet(

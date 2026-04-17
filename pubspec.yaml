@@ -37,35 +37,6 @@ flutter:
   assets:
     - assets/images/
 
-  fonts:
-    - family: FSMagistral
-      fonts:
-        - asset: assets/fonts/FS Magistral-Light.ttf
-          weight: 300
-        - asset: assets/fonts/FS Magistral-LightItalic.ttf
-          weight: 300
-          style: italic
-        - asset: assets/fonts/FS Magistral-Book.ttf
-          weight: 400
-        - asset: assets/fonts/FS Magistral-BookItalic.ttf
-          weight: 400
-          style: italic
-        - asset: assets/fonts/FS Magistral-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/FS Magistral-MediumItalic.ttf
-          weight: 500
-          style: italic
-        - asset: assets/fonts/FS Magistral-Bold.ttf
-          weight: 700
-        - asset: assets/fonts/FS Magistral-BoldItalic.ttf
-          weight: 700
-          style: italic
-        - asset: assets/fonts/FS Magistral-ExtraBold.ttf
-          weight: 800
-        - asset: assets/fonts/FS Magistral-ExtraBoldItalic.ttf
-          weight: 800
-          style: italic
-
 flutter_launcher_icons:
   android: true
   ios: true
