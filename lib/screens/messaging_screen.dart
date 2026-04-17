@@ -149,7 +149,7 @@ class MessagingScreenState extends State<MessagingScreen> {
           'Authorization': 'Bearer ${ApiService.token}',
       });
       if (res.statusCode == 200) {
-        final List data = json.decode(res.body);
+        final List data = json.decode(utf8.decode(res.bodyBytes));
         setState(() {
           _conversations = data.cast<Map<String, dynamic>>();
           _loading = false;

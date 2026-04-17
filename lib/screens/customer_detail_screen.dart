@@ -648,7 +648,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
             },
           }),
         );
-        final printData = json.decode(printRes.body);
+        final printData = json.decode(utf8.decode(printRes.bodyBytes));
         if (printData['success'] != true) {
           _snack('Máy in đang Offline!', Colors.orange);
         }
@@ -802,21 +802,23 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
           IconButton(
             icon: const Icon(Icons.qr_code_scanner),
             tooltip: 'Quét QR',
-            onPressed: () => Navigator.pushAndRemoveUntil(
-              context,
-              PageRouteBuilder(
-                pageBuilder: (_, __, ___) =>
-                    QrScanScreen(liveComments: widget.liveComments),
-                transitionsBuilder: (_, anim, __, child) => SlideTransition(
-                  position:
-                      Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero)
-                          .animate(CurvedAnimation(
-                              parent: anim, curve: Curves.easeOutCubic)),
-                  child: child,
-                ),
-              ),
-              (route) => route.isFirst,
-            ),
+            onPressed: () {
+              // Pop CustomerDetailScreen trước, rồi push QrScanScreen
+              // → back sẽ về ChotDonScreen (HomeScreen tab)
+              Navigator.of(context)
+                ..pop() // đóng CustomerDetailScreen
+                ..push(PageRouteBuilder(
+                  pageBuilder: (_, __, ___) =>
+                      QrScanScreen(liveComments: widget.liveComments),
+                  transitionsBuilder: (_, anim, __, child) => SlideTransition(
+                    position: Tween<Offset>(
+                            begin: const Offset(0, 1), end: Offset.zero)
+                        .animate(CurvedAnimation(
+                            parent: anim, curve: Curves.easeOutCubic)),
+                    child: child,
+                  ),
+                ));
+            },
           ),
           if (_editing)
             _saving
@@ -887,12 +889,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
               _editableField('Địa chỉ', _addressCtrl, Icons.location_on,
                   fieldKey: 'address', onSaved: _checkAddress),
               _buildLastMessageRow(),
-              const Divider(
-                  height: 1,
-                  color: AppTheme.darkSurface,
-                  indent: 16,
-                  endIndent: 16),
-              _buildBusinessSuiteRow(),
             ]),
             const SizedBox(height: 16),
             _sectionHeader('Lên đơn ViettelPost'),
@@ -906,7 +902,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
                   children: [
                     Row(children: [
                       Expanded(
-                        flex: 2,
+                        flex: 7,
                         child: TextField(
                           controller: _codCtrl,
                           keyboardType: TextInputType.number,
@@ -928,7 +924,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
                       ),
                       const SizedBox(width: 8),
                       Expanded(
-                        flex: 2,
+                        flex: 3,
                         child: TextField(
                           controller: _kgCtrl,
                           keyboardType: const TextInputType.numberWithOptions(
@@ -1362,97 +1358,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
     );
   }
 
-  Widget _buildBusinessSuiteRow() {
-    final realfbid = _customer.realfbid ?? '';
-    final pageId = _customer.pageid ?? '';
-    final canOpen = realfbid.isNotEmpty;
-
-    Future<void> open() async {
-      String finalThreadId = '444227216867709';
-
-      final RegExp regExp = RegExp(r'inbox/(\d+)/');
-      final match = regExp.firstMatch(
-          '/223266991771270/inbox/909242809840348/?section=messages');
-      if (match != null) {
-        finalThreadId = match.group(1)!;
-      }
-
-      final candidates = <String>[
-        'fb-business-suite://inbox/messenger?asset_id=$pageId&selected_thread_id=$finalThreadId',
-        'fb-business-suite://inbox/messenger/$pageId/$finalThreadId',
-        'fb-business-suite://thread/$finalThreadId?asset_id=$pageId',
-        'fb-business-suite://inbox?asset_id=$pageId&selected_item_id=$finalThreadId',
-      ];
-
-      for (final scheme in candidates) {
-        try {
-          final uri = Uri.parse(scheme);
-          final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-          if (ok) return;
-        } catch (e) {
-          debugPrint('Thử scheme $scheme thất bại: $e');
-        }
-      }
-
-      final webUrl =
-          'https://business.facebook.com/latest/inbox/messenger/$pageId/$finalThreadId';
-
-      try {
-        await launchUrl(
-          Uri.parse(webUrl),
-          mode: LaunchMode.platformDefault,
-        );
-      } catch (e) {
-        debugPrint('Fallback thất bại: $e');
-      }
-    }
-
-    return GestureDetector(
-      onTap: canOpen ? open : null,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: Row(children: [
-          Icon(Icons.business_center_outlined,
-              color: canOpen ? const Color(0xFF1877F2) : AppTheme.textSecondary,
-              size: 18),
-          const SizedBox(width: 12),
-          const SizedBox(
-              width: 100,
-              child: Text('Tin nhắn 2',
-                  style:
-                      TextStyle(color: AppTheme.textSecondary, fontSize: 13))),
-          Expanded(
-            child: canOpen
-                ? Row(children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1877F2).withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                            color: const Color(0xFF1877F2).withOpacity(0.35)),
-                      ),
-                      child: const Text('Business Suite',
-                          style: TextStyle(
-                              color: Color(0xFF1877F2),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600)),
-                    ),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.chevron_right,
-                        size: 16, color: AppTheme.textSecondary),
-                  ])
-                : Text('Chưa có real ID',
-                    style: TextStyle(
-                        color: AppTheme.textSecondary.withOpacity(0.5),
-                        fontSize: 13)),
-          ),
-        ]),
-      ),
-    );
-  }
-
   Widget _sectionHeader(String title) => Padding(
         padding: const EdgeInsets.only(bottom: 8),
         child: Text(title,
@@ -1617,7 +1522,7 @@ class _ReprintButtonState extends State<_ReprintButton> {
           },
         }),
       );
-      final data = json.decode(printRes.body);
+      final data = json.decode(utf8.decode(printRes.bodyBytes));
       if (data['success'] != true) {
         widget.onError('Máy in đang Offline!');
       }

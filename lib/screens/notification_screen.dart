@@ -59,7 +59,7 @@ class _NotificationScreenState extends State<NotificationScreen>
       final uri = Uri.parse('${ApiService.baseUrl}/notifications');
       final res = await http.get(uri, headers: _headers);
       if (res.statusCode == 200) {
-        final List data = json.decode(res.body);
+        final List data = json.decode(utf8.decode(res.bodyBytes));
         if (mounted) setState(() => _notis = data.cast<Map<String, dynamic>>());
       } else {
         if (mounted) setState(() => _error = 'Lỗi ${res.statusCode}');

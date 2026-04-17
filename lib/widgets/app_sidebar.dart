@@ -59,7 +59,7 @@ class _AppSidebarState extends State<AppSidebar> {
         },
       );
       if (res.statusCode == 200) {
-        final data = json.decode(res.body);
+        final data = json.decode(utf8.decode(res.bodyBytes));
         if (mounted) setState(() => _unreadCount = (data['count'] ?? 0) as int);
       }
     } catch (_) {}

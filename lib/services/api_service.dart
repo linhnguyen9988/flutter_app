@@ -37,7 +37,7 @@ class ApiService {
     final uri = Uri.parse('$baseUrl/messages').replace(queryParameters: params);
     final res = await http.get(uri, headers: _headers);
     if (res.statusCode == 200) {
-      final List data = json.decode(res.body);
+      final List data = json.decode(utf8.decode(res.bodyBytes));
       return data.map((e) => Message.fromJson(e)).toList();
     }
     throw Exception('Lỗi tải tin nhắn: ${res.statusCode}');
@@ -54,7 +54,7 @@ class ApiService {
         .replace(queryParameters: {'limit': '$limit', 'offset': '$offset'});
     final res = await http.get(uri, headers: _headers);
     if (res.statusCode == 200) {
-      final body = json.decode(res.body);
+      final body = json.decode(utf8.decode(res.bodyBytes));
       if (body is List) {
         return (
           messages: body.map((e) => Message.fromJson(e)).toList(),
@@ -122,7 +122,7 @@ class ApiService {
     final uri = Uri.parse('$baseUrl/livecomments/livestreams?limit=$limit');
     final res = await http.get(uri, headers: _headers);
     if (res.statusCode == 200) {
-      final List data = json.decode(res.body);
+      final List data = json.decode(utf8.decode(res.bodyBytes));
       return data.cast<Map<String, dynamic>>();
     }
     throw Exception('Lỗi tải livestreams');
@@ -144,7 +144,7 @@ class ApiService {
         Uri.parse('$baseUrl/livecomments').replace(queryParameters: params);
     final res = await http.get(uri, headers: _headers);
     if (res.statusCode == 200) {
-      final List data = json.decode(res.body);
+      final List data = json.decode(utf8.decode(res.bodyBytes));
       return data.map((e) => LiveComment.fromJson(e)).toList();
     }
     throw Exception('Lỗi tải bình luận live');
@@ -166,7 +166,7 @@ class ApiService {
         Uri.parse('$baseUrl/customers').replace(queryParameters: params);
     final res = await http.get(uri, headers: _headers);
     if (res.statusCode == 200) {
-      final List data = json.decode(res.body);
+      final List data = json.decode(utf8.decode(res.bodyBytes));
       return data.map((e) => Customer.fromJson(e)).toList();
     }
     throw Exception('Lỗi tải khách hàng');
@@ -175,7 +175,8 @@ class ApiService {
   static Future<Customer?> getCustomerById(int id) async {
     final uri = Uri.parse('$baseUrl/customers/$id');
     final res = await http.get(uri, headers: _headers);
-    if (res.statusCode == 200) return Customer.fromJson(json.decode(res.body));
+    if (res.statusCode == 200)
+      return Customer.fromJson(json.decode(utf8.decode(res.bodyBytes)));
     return null;
   }
 
@@ -207,7 +208,7 @@ class ApiService {
       body: json.encode({'userid': userid}),
     );
     if (res.statusCode == 200) {
-      final body = json.decode(res.body);
+      final body = json.decode(utf8.decode(res.bodyBytes));
       final List data = body['data'] ?? [];
       return _sortOrders(data.map((e) => Order.fromJson(e)).toList());
     }
@@ -229,7 +230,7 @@ class ApiService {
     final uri = Uri.parse('$baseUrl/orders').replace(queryParameters: params);
     final res = await http.get(uri, headers: _headers);
     if (res.statusCode == 200) {
-      final List data = json.decode(res.body);
+      final List data = json.decode(utf8.decode(res.bodyBytes));
       return _sortOrders(data.map((e) => Order.fromJson(e)).toList());
     }
     throw Exception('Lỗi tải đơn hàng');
@@ -238,7 +239,8 @@ class ApiService {
   static Future<Order?> getOrderById(int id) async {
     final uri = Uri.parse('$baseUrl/orders/$id');
     final res = await http.get(uri, headers: _headers);
-    if (res.statusCode == 200) return Order.fromJson(json.decode(res.body));
+    if (res.statusCode == 200)
+      return Order.fromJson(json.decode(utf8.decode(res.bodyBytes)));
     return null;
   }
 
@@ -258,7 +260,7 @@ class ApiService {
     final uri = Uri.parse('$baseUrl/orders/logs/$orderNumber');
     final res = await http.get(uri, headers: _headers);
     if (res.statusCode == 200) {
-      final List data = json.decode(res.body);
+      final List data = json.decode(utf8.decode(res.bodyBytes));
       return data.cast<Map<String, dynamic>>();
     }
     throw Exception('Lỗi tải hành trình đơn');
@@ -268,7 +270,7 @@ class ApiService {
     final uri = Uri.parse('$baseUrl/pages');
     final res = await http.get(uri, headers: _headers);
     if (res.statusCode == 200) {
-      final List data = json.decode(res.body);
+      final List data = json.decode(utf8.decode(res.bodyBytes));
       return data.map((e) => PageInfo.fromJson(e)).toList();
     }
     throw Exception('Lỗi tải danh sách page');
@@ -279,7 +281,7 @@ class ApiService {
       final uri = Uri.parse('$baseUrl/customers/pageid/$userid');
       final res = await http.get(uri, headers: _headers);
       if (res.statusCode == 200) {
-        final data = json.decode(res.body);
+        final data = json.decode(utf8.decode(res.bodyBytes));
         return data['pageid']?.toString() ?? '';
       }
     } catch (_) {}
@@ -299,7 +301,7 @@ class ApiService {
         body: json.encode({'userid': userid, 'liveIds': liveIds}),
       );
       if (res.statusCode == 200) {
-        final body = json.decode(res.body);
+        final body = json.decode(utf8.decode(res.bodyBytes));
         final List data = body['chots'] ?? body ?? [];
         return data.cast<Map<String, dynamic>>();
       }
@@ -318,7 +320,7 @@ class ApiService {
           },
           body: json.encode(body));
       if (res.statusCode == 200) {
-        return json.decode(res.body) as Map<String, dynamic>;
+        return json.decode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
       }
       return {'error': 'HTTP ${res.statusCode}'};
     } catch (e) {

@@ -41,7 +41,7 @@ class AuthService extends ChangeNotifier {
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'username': username, 'password': password}),
       );
-      final data = json.decode(res.body);
+      final data = json.decode(utf8.decode(res.bodyBytes));
       if (res.statusCode == 200 && data['token'] != null) {
         _token = data['token'];
         _user = data['user'];
@@ -102,7 +102,7 @@ class AuthService extends ChangeNotifier {
         },
         body: json.encode({'oldPassword': oldPass, 'newPassword': newPass}),
       );
-      final data = json.decode(res.body);
+      final data = json.decode(utf8.decode(res.bodyBytes));
       if (res.statusCode == 200 && data['success'] == true) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString(_keyPassword, newPass);
