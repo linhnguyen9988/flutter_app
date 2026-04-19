@@ -712,6 +712,11 @@ class _ChatScreenState extends State<ChatScreen> {
                       const Icon(Icons.error_outline,
                           size: 11, color: Colors.red),
                       const SizedBox(width: 3),
+                    ] else if (!isIncoming &&
+                        msg.messid.startsWith('local_')) ...[
+                      const Icon(Icons.check_circle,
+                          size: 11, color: Color(0xFF34C759)),
+                      const SizedBox(width: 3),
                     ],
                     Text(_formatTime(msg.dateTime),
                         style: const TextStyle(
@@ -824,19 +829,33 @@ class _ChatScreenState extends State<ChatScreen> {
             child: TextField(
               controller: _replyCtrl,
               minLines: 1,
-              maxLines: 12,
+              maxLines: 15,
               decoration: InputDecoration(
                 hintText: 'Nhập tin nhắn...',
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                suffixIcon: GestureDetector(
-                  onTap: _sendReply,
-                  child: Icon(
-                    Icons.send_rounded,
-                    size: 20,
-                    color: (_replyCtrl.text.isNotEmpty || _pickedImage != null)
-                        ? AppTheme.primary
-                        : AppTheme.textSecondary,
+                suffixIcon: Padding(
+                  padding: const EdgeInsets.only(right: 6, top: 6, bottom: 6),
+                  child: GestureDetector(
+                    onTap: (_replyCtrl.text.isNotEmpty || _pickedImage != null)
+                        ? _sendReply
+                        : null,
+                    child: Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color:
+                            (_replyCtrl.text.isNotEmpty || _pickedImage != null)
+                                ? AppTheme.primary
+                                : AppTheme.textSecondary.withOpacity(0.3),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_upward_rounded,
+                        size: 18,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ),
               ),

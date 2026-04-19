@@ -1,6 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:provider/provider.dart';
+
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'services/auth_service.dart';
@@ -11,10 +13,14 @@ import 'theme/app_theme.dart';
 final RouteObserver<ModalRoute<void>> routeObserver =
     RouteObserver<ModalRoute<void>>();
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+Future<void> main() async {
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  // Giữ splash native trong suốt quá trình khởi tạo
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
   await Firebase.initializeApp();
   NotificationService.navigatorKey = GlobalKey<NavigatorState>();
+
   runApp(
     MultiProvider(
       providers: [
@@ -71,13 +77,20 @@ class _AppEntryState extends State<AppEntry> {
       }
     } catch (_) {
     } finally {
-      if (mounted) setState(() => _checking = false);
+      if (mounted) {
+        setState(() => _checking = false);
+        // Tắt splash ngay khi đã check xong
+        FlutterNativeSplash.remove();
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_checking) return const Scaffold(backgroundColor: Color(0xFF18191A));
+    if (_checking) {
+      // Trả về widget rỗng, splash native vẫn đang che ở dưới
+      return const SizedBox.shrink();
+    }
     final auth = context.watch<AuthService>();
     return auth.isLoggedIn ? const HomeScreen() : const LoginScreen();
   }

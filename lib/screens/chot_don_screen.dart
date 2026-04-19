@@ -74,6 +74,8 @@ class ChotDonScreenState extends State<ChotDonScreen>
     _socket?.off('reconnect');
     _socket?.off('disconnect');
     _socket?.off('new-comment');
+    _socket?.off('new-chot');
+    _socket?.off('new-xa');
 
     _socket?.disconnect();
     _socket?.dispose();
@@ -125,6 +127,57 @@ class ChotDonScreenState extends State<ChotDonScreen>
             (c) => c.commentid == newComment.commentid && c.commentid != null);
         if (!exists) setState(() => _comments.insert(0, newComment));
       }
+    });
+
+    _socket!.on('new-chot', (data) {
+      if (!mounted) return;
+      try {
+        final d = Map<String, dynamic>.from(data as Map);
+        final cid = d['cid']?.toString();
+        if (cid == null) return;
+
+        final idx = _comments.indexWhere((c) => c.commentid == cid);
+        if (idx == -1) {
+          print('new-chot: không tìm thấy comment $cid trong list');
+          return;
+        }
+
+        final int sl = int.tryParse(d['slchot']?.toString() ?? '1') ?? 1;
+        final int luot = int.tryParse(d['luotincuoi']?.toString() ?? '') ??
+            _comments[idx].luotin ??
+            0;
+        final String gia = d['gia']?.toString() ?? '';
+        final String chot = d['chot']?.toString() ?? 'CHỐT';
+
+        setState(() {
+          _comments[idx] = LiveComment.fromJson({
+            ..._comments[idx].toJson(),
+            'chot': chot,
+            'gia': gia,
+            'slchot': sl,
+            'luotin': luot,
+          });
+        });
+        print('new-chot UPDATED $cid -> $chot $gia x$sl');
+      } catch (e) {
+        print('new-chot ERROR: $e');
+      }
+    });
+
+    _socket!.on('new-xa', (data) {
+      if (!mounted) return;
+      final d = Map<String, dynamic>.from(data);
+      final cid = d['cid']?.toString();
+      setState(() {
+        final idx = _comments.indexWhere((c) => c.commentid == cid);
+        if (idx >= 0) {
+          _comments[idx] = LiveComment.fromJson({
+            ..._comments[idx].toJson(),
+            'chot': '',
+            'gia': '',
+          });
+        }
+      });
     });
 
     _socket!.connect();
@@ -680,6 +733,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
             builder: (_) => CustomerDetailScreen(
               customer: customer,
               selectedLiveIds: selectedLiveIds,
+              liveComments: _comments, // truyền comments để lấy đúng gia
             ),
           ),
         );
@@ -916,15 +970,11 @@ class ChotDonScreenState extends State<ChotDonScreen>
                                   GestureDetector(
                                     onTap: () async {
                                       await ApiService.postRaw(
-                                        'https://aodaigiabao.com/updatechot',
+                                        'https://aodaigiabao.com/updatexa',
                                         {
                                           'commentid': uc.commentid ?? '',
-                                          'chot': 'XẢ HÀNG',
-                                          'gia': uc.gia ?? '',
-                                          'luotincuoi': uc.luotin ?? 0,
+                                          'chot': '',
                                           'liveid': uc.liveid ?? '',
-                                          'luotcuoilive': uc.luotin ?? 0,
-                                          'slchot': uc.slchot ?? 1,
                                         },
                                       );
                                       if (mounted) {
@@ -936,7 +986,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
                                             _comments[idx] =
                                                 LiveComment.fromJson({
                                               ..._comments[idx].toJson(),
-                                              'chot': 'XẢ HÀNG',
+                                              'chot': 'XẢ',
                                             });
                                           }
                                         });
@@ -1779,9 +1829,11 @@ class ChotDonScreenState extends State<ChotDonScreen>
       await ApiService.postRaw('https://aodaigiabao.com/updatexa', {
         'commentid': c.commentid ?? '',
         'chot': '',
+        'liveid': c.liveid ?? '',
       });
       if (mounted) {
         setState(() {
+          // 1. update list chính
           final idx = _comments.indexWhere((x) => x.commentid == c.commentid);
           if (idx >= 0) {
             _comments[idx] = LiveComment.fromJson({
@@ -1790,6 +1842,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
               'gia': '',
             });
           }
+          _userComments.removeWhere((x) => x.commentid == c.commentid);
         });
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('Đã xả chốt'), backgroundColor: Colors.orange));

@@ -122,13 +122,21 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
     final isPage =
         (msg['sender']?.toString() ?? '') == (_customer.pageid ?? '');
     final prefix = isPage ? 'Bạn: ' : '';
-    final text = msg['message']?.toString() ?? '';
-    final image = msg['image']?.toString() ?? '';
+    final text = (msg['message'] ?? '').toString().trim();
+    final image = (msg['image'] ?? '').toString().trim();
+
     if (text.isNotEmpty) return '$prefix$text';
+
     if (image.isNotEmpty) {
-      if (image.toLowerCase().contains('like')) return '${prefix}👍';
-      return '${prefix}👍';
+      final lower = image.toLowerCase();
+      // sticker like của Facebook thường có 'like' trong URL, hoặc id 369239263222822
+      final isLike = lower.contains('like') ||
+          lower.contains('369239263222822') ||
+          lower.contains('sticker');
+      if (isLike) return '${prefix}👍';
+      return '${prefix}Hình ảnh'; // <-- hình thật
     }
+
     return '${prefix}(Tin nhắn)';
   }
 
@@ -803,8 +811,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
             icon: const Icon(Icons.qr_code_scanner),
             tooltip: 'Quét QR',
             onPressed: () {
-              // Pop CustomerDetailScreen trước, rồi push QrScanScreen
-              // → back sẽ về ChotDonScreen (HomeScreen tab)
               Navigator.of(context)
                 ..pop() // đóng CustomerDetailScreen
                 ..push(PageRouteBuilder(
@@ -902,7 +908,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
                   children: [
                     Row(children: [
                       Expanded(
-                        flex: 7,
+                        flex: 6,
                         child: TextField(
                           controller: _codCtrl,
                           keyboardType: TextInputType.number,
@@ -924,7 +930,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
                       ),
                       const SizedBox(width: 8),
                       Expanded(
-                        flex: 3,
+                        flex: 4,
                         child: TextField(
                           controller: _kgCtrl,
                           keyboardType: const TextInputType.numberWithOptions(
@@ -1143,18 +1149,39 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
               onDoubleTap: () => _startEdit('note'),
               child: Container(
                 decoration: BoxDecoration(
-                    color: AppTheme.darkCard,
-                    borderRadius: BorderRadius.circular(12)),
+                  color: AppTheme.darkCard,
+                  borderRadius: BorderRadius.circular(8), // <-- từ 12 xuống 8
+                  border: _isEditing('note')
+                      ? Border.all(
+                          color: AppTheme.primary.withOpacity(0.4), width: 1)
+                      : null, // thêm viền mảnh khi edit
+                ),
                 child: _isEditing('note')
                     ? TextField(
                         controller: _noteCtrl,
                         maxLines: 4,
                         autofocus: true,
                         onTapOutside: (_) => _stopEdit('note'),
+                        style: const TextStyle(
+                            color: AppTheme.textPrimary, fontSize: 14),
                         decoration: InputDecoration(
                           hintText: 'Thêm ghi chú...',
-                          contentPadding: const EdgeInsets.all(16),
-                          border: InputBorder.none,
+                          hintStyle: TextStyle(
+                              color: AppTheme.textSecondary.withOpacity(0.6)),
+                          contentPadding:
+                              const EdgeInsets.fromLTRB(12, 12, 36, 12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
                           suffixIcon: IconButton(
                             icon: const Icon(Icons.check,
                                 color: AppTheme.accent, size: 18),
@@ -1162,7 +1189,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
                           ),
                         ))
                     : Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(12), // giảm từ 16
                         child: Text(
                           _noteCtrl.text.isEmpty
                               ? 'Chưa có ghi chú  —  nhấn đúp để sửa'
@@ -1437,6 +1464,19 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
                       isDense: true,
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 6),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: AppTheme.darkSurface),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: AppTheme.darkSurface),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide:
+                            BorderSide(color: AppTheme.primary, width: 1),
+                      ),
                       suffixIcon: IconButton(
                         icon: const Icon(Icons.check,
                             color: AppTheme.accent, size: 18),

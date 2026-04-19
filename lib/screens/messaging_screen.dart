@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
-import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../theme/app_theme.dart';
 import '../models/live_comment.dart';
@@ -30,22 +33,35 @@ class MessagingScreenState extends State<MessagingScreen> {
   IO.Socket? _socket;
   bool _socketConnected = false;
   final _scrollCtrl = ScrollController();
+  Timer? _ticker; // <-- THÊM: tự refresh giờ
 
   @override
   void initState() {
     super.initState();
     _loadMessages();
     _connectSocket();
+    _ticker = Timer.periodic(const Duration(seconds: 10), (_) {
+      if (mounted) setState(() {});
+    });
   }
 
   void reload() => _loadMessages();
 
   @override
   void dispose() {
+    _ticker?.cancel(); // <-- THÊM
     _socket?.disconnect();
     _socket?.dispose();
     _scrollCtrl.dispose();
     super.dispose();
+  }
+
+  bool _parseEcho(dynamic v) {
+    if (v == null) return false;
+    if (v is bool) return v;
+    if (v is int) return v == 1;
+    final s = v.toString().toLowerCase();
+    return s == 'true' || s == '1';
   }
 
   void _connectSocket() {
@@ -77,12 +93,12 @@ class MessagingScreenState extends State<MessagingScreen> {
   void _onNewMessage(Map<String, dynamic> d) {
     final senderId = d['senderId']?.toString() ?? '';
     final recipientId = d['recipientId']?.toString() ?? '';
-    final isEcho = d['is_echo'] == true || d['is_echo'] == 'true';
+    final isEcho = _parseEcho(d['is_echo']);
     final text = d['messageText']?.toString() ?? '';
     final fbname = d['fbname']?.toString() ?? '';
     final label = d['label']?.toString() ?? '';
     final image = d['messageImg']?.toString() ?? '';
-    final ts = d['timestamp']?.toString() ?? '';
+    final ts = DateTime.now().millisecondsSinceEpoch.toString();
 
     final khachId = isEcho ? recipientId : senderId;
     final pageId = isEcho ? senderId : recipientId;
@@ -96,16 +112,25 @@ class MessagingScreenState extends State<MessagingScreen> {
         (c) => (c['khach_userid']?.toString() ?? '') == khachUserId,
       );
 
-      final preview = text.isNotEmpty
-          ? text
-          : image.isNotEmpty
-              ? '📷 Hình ảnh'
-              : '';
+      // --- FIX: phân biệt like vs ảnh ---
+      String preview;
+      if (text.isNotEmpty) {
+        preview = text;
+      } else if (image.isNotEmpty) {
+        final lower = image.toLowerCase();
+        final isLike = lower.contains('like') ||
+            lower.contains('369239263222822') ||
+            lower.contains('sticker');
+        preview = isLike ? '👍' : '📷 Hình ảnh';
+      } else {
+        preview = '';
+      }
 
       if (idx >= 0) {
         final existing = Map<String, dynamic>.from(_conversations[idx]);
         existing['message'] = preview;
         existing['time'] = ts;
+        existing['timestamp'] = ts;
         existing['isNew'] = true;
         existing['is_echo'] = isEcho;
         if (image.isNotEmpty) existing['image'] = image;
@@ -127,6 +152,7 @@ class MessagingScreenState extends State<MessagingScreen> {
           'is_echo': isEcho,
           'message': preview,
           'time': ts,
+          'timestamp': ts,
           'image': image,
           'picture': picture,
           'ten_khach': fbname.isNotEmpty ? fbname : khachUserId,
@@ -175,12 +201,23 @@ class MessagingScreenState extends State<MessagingScreen> {
     final isPage = _isEcho(c);
     final prefix = isPage ? 'Bạn: ' : '';
     final msg = (c['message'] ?? '').toString();
+    final image = (c['image'] ?? '').toString();
     final images = c['images'];
-    if (msg.isEmpty && images != null && (images as List).isNotEmpty) {
+
+    // --- FIX: ưu tiên msg, check like ---
+    if (msg.isNotEmpty) {
+      return '$prefix$msg';
+    }
+    if (image.isNotEmpty) {
+      final lower = image.toLowerCase();
+      final isLike =
+          lower.contains('like') || lower.contains('369239263222822');
+      return isLike ? '${prefix}👍' : '${prefix}📷 Hình ảnh';
+    }
+    if (images != null && (images as List).isNotEmpty) {
       return '${prefix}📷 Hình ảnh';
     }
-    if (msg.isEmpty) return '';
-    return '$prefix$msg';
+    return '';
   }
 
   bool _isEcho(Map<String, dynamic> c) {
@@ -191,7 +228,7 @@ class MessagingScreenState extends State<MessagingScreen> {
       if (pageid.isNotEmpty) return sender == pageid;
       return false;
     }
-    return v == 1 || v == '1' || v == true || v == 'true';
+    return _parseEcho(v);
   }
 
   String _khachUserId(Map<String, dynamic> c) {
@@ -251,12 +288,13 @@ class MessagingScreenState extends State<MessagingScreen> {
       final now = DateTime.now();
       final diff = now.difference(dt);
       final sec = diff.inSeconds;
-      final min = diff.inMinutes;
-      final hrs = diff.inHours;
-      final days = diff.inDays;
+      if (sec < 5) return 'vừa xong';
       if (sec < 60) return '$sec giây trước';
+      final min = diff.inMinutes;
       if (min < 60) return '$min phút trước';
+      final hrs = diff.inHours;
       if (hrs < 24) return '$hrs giờ trước';
+      final days = diff.inDays;
       if (days < 30) return '$days ngày trước';
       final months = (days / 30.44).floor();
       if (months < 12) return '$months tháng trước';

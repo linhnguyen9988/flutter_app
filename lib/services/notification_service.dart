@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -9,7 +10,20 @@ import '../screens/order_detail_screen.dart';
 import 'api_service.dart';
 
 @pragma('vm:entry-point')
-Future<void> _firebaseBackgroundHandler(RemoteMessage message) async {}
+Future<void> _firebaseBackgroundHandler(RemoteMessage message) async {
+  // Chạy trong isolate riêng khi app bị kill
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  await NotificationService.initForBackground();
+
+  final data = message.data;
+  final title = data['title']?.toString() ?? message.notification?.title ?? '';
+  final body = data['body']?.toString() ?? message.notification?.body ?? '';
+
+  if (title.isNotEmpty) {
+    await NotificationService.showFromBackground(title, body, data);
+  }
+}
 
 class NotificationService {
   NotificationService._();
@@ -89,6 +103,27 @@ class NotificationService {
         _handleFcmTap(initial.data);
       });
     }
+  }
+
+  // Dùng cho background isolate
+  static Future<void> initForBackground() async {
+    if (_initialized) return;
+    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const iosInit = DarwinInitializationSettings();
+    await _plugin.initialize(
+      const InitializationSettings(android: androidInit, iOS: iosInit),
+      onDidReceiveNotificationResponse: _onTap,
+    );
+    await _plugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(_androidChannel);
+    _initialized = true;
+  }
+
+  static Future<void> showFromBackground(
+      String title, String body, Map<String, dynamic> data) async {
+    await _show(title, body, data);
   }
 
   static Future<void> _uploadFcmToken() async {
