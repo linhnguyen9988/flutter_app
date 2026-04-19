@@ -175,8 +175,9 @@ class ApiService {
   static Future<Customer?> getCustomerById(int id) async {
     final uri = Uri.parse('$baseUrl/customers/$id');
     final res = await http.get(uri, headers: _headers);
-    if (res.statusCode == 200)
+    if (res.statusCode == 200) {
       return Customer.fromJson(json.decode(utf8.decode(res.bodyBytes)));
+    }
     return null;
   }
 
@@ -239,8 +240,9 @@ class ApiService {
   static Future<Order?> getOrderById(int id) async {
     final uri = Uri.parse('$baseUrl/orders/$id');
     final res = await http.get(uri, headers: _headers);
-    if (res.statusCode == 200)
+    if (res.statusCode == 200) {
       return Order.fromJson(json.decode(utf8.decode(res.bodyBytes)));
+    }
     return null;
   }
 

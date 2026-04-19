@@ -215,7 +215,7 @@ class _AppSidebarState extends State<AppSidebar> {
                     trailing: Switch(
                       value: _biometricEnabled,
                       onChanged: _toggleBiometric,
-                      activeColor: AppTheme.primary,
+                      activeThumbColor: AppTheme.primary,
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                   ),
@@ -239,10 +239,10 @@ class _AppSidebarState extends State<AppSidebar> {
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.12),
+                        color: Colors.red.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: Colors.red.withOpacity(0.3),
+                          color: Colors.red.withValues(alpha: 0.3),
                           width: 1,
                         ),
                       ),

@@ -44,6 +44,9 @@ class _HomeScreenState extends State<HomeScreen>
   late final AnimationController _bannerAnim;
   late final Animation<Offset> _bannerSlide;
 
+  // THÊM: số tin chưa đọc
+  int _unreadMessages = 0;
+
   @override
   void initState() {
     super.initState();
@@ -69,6 +72,10 @@ class _HomeScreenState extends State<HomeScreen>
         key: _messagingKey,
         getLiveIds: () => _chotDonKey.currentState?.selectedLiveIds ?? [],
         getLiveComments: () => _chotDonKey.currentState?.comments ?? [],
+        onUnreadChanged: (count) {
+          // THÊM CALLBACK
+          if (mounted) setState(() => _unreadMessages = count);
+        },
       ),
       CustomersScreen(
           key: _customersKey,
@@ -241,7 +248,7 @@ class _HomeScreenState extends State<HomeScreen>
                             color: AppTheme.primary,
                             boxShadow: [
                               BoxShadow(
-                                color: AppTheme.primary.withOpacity(0.35),
+                                color: AppTheme.primary.withValues(alpha: 0.35),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               )
@@ -270,6 +277,8 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _navItem(int index, IconData icon, IconData activeIcon, String label) {
     final isSelected = _currentIndex == index;
+    final showBadge = index == 2 && _unreadMessages > 0; // tab Tin nhắn
+
     return GestureDetector(
       onTap: () => setState(() => _currentIndex = index),
       behavior: HitTestBehavior.opaque,
@@ -278,10 +287,42 @@ class _HomeScreenState extends State<HomeScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              isSelected ? activeIcon : icon,
-              color: isSelected ? AppTheme.primary : AppTheme.textSecondary,
-              size: 24,
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(
+                  isSelected ? activeIcon : icon,
+                  color: isSelected ? AppTheme.primary : AppTheme.textSecondary,
+                  size: 24,
+                ),
+                if (showBadge)
+                  Positioned(
+                    right: -6,
+                    top: -4,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 5, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(10),
+                        border:
+                            Border.all(color: AppTheme.darkCard, width: 1.5),
+                      ),
+                      constraints:
+                          const BoxConstraints(minWidth: 18, minHeight: 18),
+                      child: Text(
+                        _unreadMessages > 99 ? '99+' : '$_unreadMessages',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          height: 1.1,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: 2),
             Text(

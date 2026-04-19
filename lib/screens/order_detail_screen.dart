@@ -107,10 +107,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
     try {
       final realId = _order.realorderid ?? '';
       if (realId.isEmpty) {
-        if (mounted)
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
               content: Text('Không có mã đơn thực để hủy'),
               backgroundColor: Colors.red));
+        }
         setState(() => _saving = false);
         return;
       }
@@ -216,11 +217,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: _statusColor(_order.statuscode).withOpacity(0.1),
+                        color: _statusColor(_order.statuscode)
+                            .withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                             color: _statusColor(_order.statuscode)
-                                .withOpacity(0.3)),
+                                .withValues(alpha: 0.3)),
                       ),
                       child: Row(
                         children: [
@@ -245,7 +247,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                                     _lastNote,
                                     style: TextStyle(
                                       color: _statusColor(_order.statuscode)
-                                          .withOpacity(0.8),
+                                          .withValues(alpha: 0.8),
                                       fontSize: 12,
                                       fontWeight: FontWeight.w400,
                                     ),
@@ -374,7 +376,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
 
   Widget _divider() => Divider(
       height: 0,
-      color: AppTheme.darkSurface.withOpacity(0.5),
+      color: AppTheme.darkSurface.withValues(alpha: 0.5),
       indent: 16,
       endIndent: 16);
 

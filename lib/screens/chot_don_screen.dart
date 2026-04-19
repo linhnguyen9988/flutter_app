@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_theme.dart';
 import '../models/live_comment.dart';
@@ -45,7 +45,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
   bool _headerVisible = true;
   double _lastScrollOffset = 0;
 
-  IO.Socket? _socket;
+  io.Socket? _socket;
   bool _socketConnected = false;
 
   @override
@@ -88,9 +88,9 @@ class ChotDonScreenState extends State<ChotDonScreen>
   }
 
   void _connectSocket() {
-    _socket = IO.io(
+    _socket = io.io(
         _socketUrl,
-        IO.OptionBuilder()
+        io.OptionBuilder()
             .setTransports(['websocket'])
             .disableAutoConnect()
             .build());
@@ -137,10 +137,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
         if (cid == null) return;
 
         final idx = _comments.indexWhere((c) => c.commentid == cid);
-        if (idx == -1) {
-          print('new-chot: không tìm thấy comment $cid trong list');
-          return;
-        }
+        if (idx == -1) return;
 
         final int sl = int.tryParse(d['slchot']?.toString() ?? '1') ?? 1;
         final int luot = int.tryParse(d['luotincuoi']?.toString() ?? '') ??
@@ -148,6 +145,11 @@ class ChotDonScreenState extends State<ChotDonScreen>
             0;
         final String gia = d['gia']?.toString() ?? '';
         final String chot = d['chot']?.toString() ?? 'CHỐT';
+        final String liveId = _comments[idx].liveid ?? '';
+
+        final int totalChot = int.tryParse(
+                (d['luotcuoilive'] ?? d['luotincuoi'] ?? '').toString()) ??
+            0;
 
         setState(() {
           _comments[idx] = LiveComment.fromJson({
@@ -157,10 +159,19 @@ class ChotDonScreenState extends State<ChotDonScreen>
             'slchot': sl,
             'luotin': luot,
           });
+
+          void setLiveTotal(List<Map<String, dynamic>> list) {
+            final li = list.indexWhere((l) => l['id'].toString() == liveId);
+            if (li != -1 && totalChot > 0) {
+              list[li]['luotincuoi'] = totalChot;
+            }
+          }
+
+          setLiveTotal(_livestreams);
+          setLiveTotal(_selectedLives);
         });
-        print('new-chot UPDATED $cid -> $chot $gia x$sl');
       } catch (e) {
-        print('new-chot ERROR: $e');
+        //print('new-chot ERROR: $e');
       }
     });
 
@@ -355,7 +366,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
                 margin: const EdgeInsets.only(top: 4, bottom: 4),
                 clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
+                  color: Colors.white..withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Center(
@@ -370,7 +381,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
                           horizontal: 10, vertical: 8),
                       hintText: 'Tìm tên, SĐT, bình luận...',
                       hintStyle: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
+                        color: Colors.white..withValues(alpha: 0.5),
                         fontSize: 14,
                       ),
                       suffixIcon: _searchText.isNotEmpty
@@ -646,8 +657,8 @@ class ChotDonScreenState extends State<ChotDonScreen>
         key: const PageStorageKey('comment_list'),
         controller: _commentScrollCtrl,
         itemCount: _filtered.length,
-        separatorBuilder: (_, __) =>
-            Divider(height: 0, color: AppTheme.darkSurface.withOpacity(0.4)),
+        separatorBuilder: (_, __) => Divider(
+            height: 0, color: AppTheme.darkSurface.withValues(alpha: 0.4)),
         itemBuilder: (_, i) {
           final c = _filtered[i];
           return _buildCommentTile(c,
@@ -673,9 +684,10 @@ class ChotDonScreenState extends State<ChotDonScreen>
         margin: const EdgeInsets.only(left: 6),
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
         decoration: BoxDecoration(
-          color: const Color(0xFFFF69B4).withOpacity(0.18),
+          color: const Color(0xFFFF69B4).withValues(alpha: 0.18),
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: const Color(0xFFFF69B4).withOpacity(0.5)),
+          border:
+              Border.all(color: const Color(0xFFFF69B4).withValues(alpha: 0.5)),
         ),
         child: const Text('🌏 NN',
             style: TextStyle(
@@ -690,9 +702,9 @@ class ChotDonScreenState extends State<ChotDonScreen>
       margin: const EdgeInsets.only(left: 6),
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withOpacity(0.5)),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Text(label,
           style: TextStyle(
@@ -811,7 +823,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
                   child: Container(
                     padding: const EdgeInsets.all(7),
                     decoration: BoxDecoration(
-                        color: AppTheme.primary.withOpacity(0.15),
+                        color: AppTheme.primary.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8)),
                     child: const Icon(Icons.add_shopping_cart,
                         color: AppTheme.primary, size: 18),
@@ -942,7 +954,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
                     itemCount: userComments.length,
                     separatorBuilder: (_, __) => Divider(
                         height: 0,
-                        color: AppTheme.darkSurface.withOpacity(0.4)),
+                        color: AppTheme.darkSurface.withValues(alpha: 0.4)),
                     itemBuilder: (_, i) {
                       final uc = userComments[i];
                       return ListTile(
@@ -1004,7 +1016,8 @@ class ChotDonScreenState extends State<ChotDonScreen>
                                       padding: const EdgeInsets.all(6),
                                       margin: const EdgeInsets.only(right: 6),
                                       decoration: BoxDecoration(
-                                        color: Colors.orange.withOpacity(0.13),
+                                        color: Colors.orange
+                                            .withValues(alpha: 0.13),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: const Icon(Icons.undo,
@@ -1019,8 +1032,8 @@ class ChotDonScreenState extends State<ChotDonScreen>
                                     child: Container(
                                       padding: const EdgeInsets.all(6),
                                       decoration: BoxDecoration(
-                                        color:
-                                            AppTheme.primary.withOpacity(0.13),
+                                        color: AppTheme.primary
+                                            .withValues(alpha: 0.13),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: const Icon(
@@ -1084,7 +1097,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
       if (i > 0 && (str.length - i) % 3 == 0) buf.write('.');
       buf.write(str[i]);
     }
-    return buf.toString() + 'đ';
+    return '$bufđ';
   }
 
   String _formatMoneyK(int val) {
@@ -1218,7 +1231,8 @@ class ChotDonScreenState extends State<ChotDonScreen>
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 itemCount: items.length,
                 separatorBuilder: (_, __) => Divider(
-                    height: 0, color: AppTheme.darkSurface.withOpacity(0.4)),
+                    height: 0,
+                    color: AppTheme.darkSurface.withValues(alpha: 0.4)),
                 itemBuilder: (_, i) {
                   if (i >= items.length) return const SizedBox.shrink();
                   final c = items[i];
@@ -1254,7 +1268,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
                             padding: const EdgeInsets.all(6),
                             margin: const EdgeInsets.only(right: 6),
                             decoration: BoxDecoration(
-                              color: Colors.orange.withOpacity(0.13),
+                              color: Colors.orange.withValues(alpha: 0.13),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(Icons.undo,
@@ -1271,7 +1285,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
                           child: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: Colors.red.withOpacity(0.12),
+                              color: Colors.red.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(Icons.remove_circle_outline,
@@ -1295,7 +1309,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: AppTheme.primary.withOpacity(0.15),
+                color: AppTheme.primary.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text('$totalQty vải',
@@ -1321,12 +1335,12 @@ class ChotDonScreenState extends State<ChotDonScreen>
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                 decoration: BoxDecoration(
                   color: _includeShip
-                      ? AppTheme.accent.withOpacity(0.15)
+                      ? AppTheme.accent.withValues(alpha: 0.15)
                       : AppTheme.darkSurface,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: _includeShip
-                        ? AppTheme.accent.withOpacity(0.5)
+                        ? AppTheme.accent.withValues(alpha: 0.5)
                         : AppTheme.darkSurface,
                   ),
                 ),
@@ -1512,7 +1526,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
                   decoration: InputDecoration(
                     hintText: 'Giá (VD: 35000)',
                     hintStyle: TextStyle(
-                        color: AppTheme.textSecondary.withOpacity(0.6),
+                        color: AppTheme.textSecondary.withValues(alpha: 0.6),
                         fontSize: 12),
                     prefixIcon: const Icon(Icons.payments_outlined,
                         color: AppTheme.textSecondary, size: 16),
@@ -1538,7 +1552,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
                   decoration: InputDecoration(
                     hintText: 'SL',
                     hintStyle: TextStyle(
-                        color: AppTheme.textSecondary.withOpacity(0.6),
+                        color: AppTheme.textSecondary.withValues(alpha: 0.6),
                         fontSize: 12),
                     filled: true,
                     fillColor: AppTheme.darkSurface,
@@ -1561,7 +1575,8 @@ class ChotDonScreenState extends State<ChotDonScreen>
                     label: const Text('Xả', style: TextStyle(fontSize: 13)),
                     style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.orange,
-                        side: BorderSide(color: Colors.orange.withOpacity(0.5)),
+                        side: BorderSide(
+                            color: Colors.orange.withValues(alpha: 0.5)),
                         padding: const EdgeInsets.symmetric(vertical: 10)),
                     onPressed: () {
                       Navigator.pop(context);
@@ -1577,8 +1592,8 @@ class ChotDonScreenState extends State<ChotDonScreen>
                   label: const Text('Xem đơn', style: TextStyle(fontSize: 13)),
                   style: OutlinedButton.styleFrom(
                       foregroundColor: AppTheme.primary,
-                      side:
-                          BorderSide(color: AppTheme.primary.withOpacity(0.5)),
+                      side: BorderSide(
+                          color: AppTheme.primary.withValues(alpha: 0.5)),
                       padding: const EdgeInsets.symmetric(vertical: 10)),
                   onPressed: () {
                     Navigator.pop(context);
@@ -1652,20 +1667,22 @@ class ChotDonScreenState extends State<ChotDonScreen>
           'https://aodaigiabao.com/api/generate-pdf', printData);
 
       if (pdfRes == null || pdfRes['error'] != null) {
-        if (mounted)
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content:
                   Text('Lỗi tạo PDF: ${pdfRes?['error'] ?? 'null response'}'),
               backgroundColor: Colors.red));
+        }
         return;
       }
 
       if (pdfRes['success'] != true) {
-        if (mounted)
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Text(
                   'PDF thất bại: ${pdfRes['message'] ?? pdfRes.toString()}'),
               backgroundColor: Colors.red));
+        }
         return;
       }
 
@@ -1683,18 +1700,20 @@ class ChotDonScreenState extends State<ChotDonScreen>
           },
         });
         if (printRes == null || printRes['error'] != null) {
-          if (mounted)
+          if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                 content: Text(
                     'Lỗi gửi lệnh in tờ ${k + 1}: ${printRes?['error'] ?? 'null'}'),
                 backgroundColor: Colors.red));
+          }
           return;
         }
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text('Lỗi kết nối: $e'), backgroundColor: Colors.red));
+      }
     }
   }
 
@@ -1738,11 +1757,12 @@ class ChotDonScreenState extends State<ChotDonScreen>
       });
 
       if (chotRes == null || chotRes['error'] != null) {
-        if (mounted)
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content:
                   Text('Lỗi lưu DB: ${chotRes?['error'] ?? 'null response'}'),
               backgroundColor: Colors.red));
+        }
         return;
       }
 
@@ -1778,20 +1798,22 @@ class ChotDonScreenState extends State<ChotDonScreen>
           'https://aodaigiabao.com/api/generate-pdf', printData);
 
       if (pdfRes == null || pdfRes['error'] != null) {
-        if (mounted)
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content:
                   Text('Lỗi tạo PDF: ${pdfRes?['error'] ?? 'null response'}'),
               backgroundColor: Colors.orange));
+        }
         return;
       }
 
       if (pdfRes['success'] != true) {
-        if (mounted)
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Text(
                   'PDF thất bại: ${pdfRes['message'] ?? pdfRes.toString()}'),
               backgroundColor: Colors.orange));
+        }
         return;
       }
 
@@ -1809,18 +1831,20 @@ class ChotDonScreenState extends State<ChotDonScreen>
           },
         });
         if (printRes == null || printRes['error'] != null) {
-          if (mounted)
+          if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                 content: Text(
                     'Lỗi gửi lệnh in tờ ${k + 1}: ${printRes?['error'] ?? 'null'}'),
                 backgroundColor: Colors.red));
+          }
           return;
         }
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text('Lỗi khi chốt: $e'), backgroundColor: Colors.red));
+      }
     }
   }
 
@@ -1848,9 +1872,10 @@ class ChotDonScreenState extends State<ChotDonScreen>
             content: Text('Đã xả chốt'), backgroundColor: Colors.orange));
       }
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('Lỗi khi xả chốt'), backgroundColor: Colors.red));
+      }
     }
   }
 
@@ -1867,9 +1892,9 @@ class ChotDonScreenState extends State<ChotDonScreen>
   Widget _tag(String text, Color color) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
+            color: color.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: color.withOpacity(0.3))),
+            border: Border.all(color: color.withValues(alpha: 0.3))),
         child: Text(text,
             style: TextStyle(
                 color: color, fontSize: 11, fontWeight: FontWeight.w600)),
@@ -1911,7 +1936,7 @@ class _LiveBadgeState extends State<_LiveBadge>
       animation: _anim,
       builder: (_, __) => Icon(
         Icons.live_tv,
-        color: Colors.red.withOpacity(_anim.value),
+        color: Colors.red.withValues(alpha: _anim.value),
         size: 14,
       ),
     );

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -147,10 +148,22 @@ class NotificationService {
 
   static Future<void> cancelByNotiId(String notiId) async {
     final idInt = int.tryParse(notiId);
-    if (idInt != null) await _plugin.cancel(idInt);
+    if (idInt != null) {
+      try {
+        await _plugin.cancel(idInt);
+      } on PlatformException catch (e) {
+        debugPrint('[Noti] cancel warning (safe to ignore): ${e.message}');
+      }
+    }
   }
 
-  static Future<void> cancelAll() => _plugin.cancelAll();
+  static Future<void> cancelAll() async {
+    try {
+      await _plugin.cancelAll();
+    } on PlatformException catch (e) {
+      debugPrint('[Noti] cancelAll warning (safe to ignore): ${e.message}');
+    }
+  }
 
   static int _notifId = 0;
 

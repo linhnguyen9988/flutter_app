@@ -184,7 +184,7 @@ class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
                     boxShadow: isFirst
                         ? [
                             BoxShadow(
-                                color: color.withOpacity(0.4),
+                                color: color.withValues(alpha: 0.4),
                                 blurRadius: 8,
                                 spreadRadius: 2)
                           ]
@@ -210,10 +210,12 @@ class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isFirst ? color.withOpacity(0.08) : AppTheme.darkCard,
+                  color: isFirst
+                      ? color.withValues(alpha: 0.08)
+                      : AppTheme.darkCard,
                   borderRadius: BorderRadius.circular(12),
                   border: isFirst
-                      ? Border.all(color: color.withOpacity(0.3))
+                      ? Border.all(color: color.withValues(alpha: 0.3))
                       : null,
                 ),
                 child: Column(
@@ -279,7 +281,8 @@ class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
                       const SizedBox(height: 4),
                       Text(note,
                           style: TextStyle(
-                              color: AppTheme.textSecondary.withOpacity(0.7),
+                              color:
+                                  AppTheme.textSecondary.withValues(alpha: 0.7),
                               fontSize: 11)),
                     ],
                   ],

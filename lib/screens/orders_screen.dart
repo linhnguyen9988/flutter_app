@@ -47,7 +47,7 @@ class OrdersScreenState extends State<OrdersScreen> {
     try {
       List<Order> orders;
 
-      Future<List<Order>> _multi(List<String> statuses) async {
+      Future<List<Order>> multi(List<String> statuses) async {
         final results = await Future.wait(
           statuses
               .map((s) => ApiService.getOrders(status: s, search: _searchText)),
@@ -58,21 +58,21 @@ class OrdersScreenState extends State<OrdersScreen> {
       }
 
       if (_statusFilter == 'new') {
-        orders = await _multi(['-108', '100', '103', '104']);
+        orders = await multi(['-108', '100', '103', '104']);
       } else if (_statusFilter == 'processing') {
-        orders = await _multi(['102']);
+        orders = await multi(['102']);
       } else if (_statusFilter == 'shipping') {
-        orders = await _multi(['200', '202', '300', '400', '509']);
+        orders = await multi(['200', '202', '300', '400', '509']);
       } else if (_statusFilter == 'delivering') {
-        orders = await _multi(['500', '508', '550']);
+        orders = await multi(['500', '508', '550']);
       } else if (_statusFilter == 'success') {
-        orders = await _multi(['501']);
+        orders = await multi(['501']);
       } else if (_statusFilter == 'ton') {
-        orders = await _multi(['505', '506', '507']);
+        orders = await multi(['505', '506', '507']);
       } else if (_statusFilter == 'return') {
-        orders = await _multi(['502', '515', '551', '504']);
+        orders = await multi(['502', '515', '551', '504']);
       } else if (_statusFilter == 'cancel') {
-        orders = await _multi(['107', '503']);
+        orders = await multi(['107', '503']);
       } else {
         orders = await ApiService.getOrders(
           status: _statusFilter,
@@ -174,7 +174,7 @@ class OrdersScreenState extends State<OrdersScreen> {
                 isDense: true,
                 hintText: 'Mã đơn, tên, sđt...',
                 hintStyle: TextStyle(
-                    color: Colors.white.withOpacity(0.45), fontSize: 14),
+                    color: Colors.white.withValues(alpha: 0.45), fontSize: 14),
                 prefixIcon: const Icon(Icons.search,
                     color: AppTheme.textSecondary, size: 20),
                 suffixIcon: _searchText.isNotEmpty
@@ -246,7 +246,7 @@ class OrdersScreenState extends State<OrdersScreen> {
                     itemCount: _orders.length,
                     separatorBuilder: (_, __) => Divider(
                         height: 0,
-                        color: AppTheme.darkSurface.withOpacity(0.5)),
+                        color: AppTheme.darkSurface.withValues(alpha: 0.5)),
                     itemBuilder: (_, i) => _buildOrderTile(_orders[i]),
                   ),
                 ),
@@ -415,7 +415,7 @@ class OrdersScreenState extends State<OrdersScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 7, vertical: 2),
                         decoration: BoxDecoration(
-                          color: statusColor.withOpacity(0.15),
+                          color: statusColor.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(

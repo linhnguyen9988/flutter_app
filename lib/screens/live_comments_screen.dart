@@ -129,7 +129,7 @@ class _LiveCommentsScreenState extends State<LiveCommentsScreen> {
                       selected: _filterOrders,
                       onSelected: (v) => setState(() => _filterOrders = v),
                       backgroundColor: AppTheme.darkSurface,
-                      selectedColor: AppTheme.primary.withOpacity(0.3),
+                      selectedColor: AppTheme.primary.withValues(alpha: 0.3),
                       checkmarkColor: AppTheme.primary,
                       labelStyle: TextStyle(
                         color: _filterOrders
@@ -160,7 +160,7 @@ class _LiveCommentsScreenState extends State<LiveCommentsScreen> {
                     itemCount: _filtered.length,
                     separatorBuilder: (_, __) => Divider(
                         height: 0,
-                        color: AppTheme.darkSurface.withOpacity(0.5)),
+                        color: AppTheme.darkSurface.withValues(alpha: 0.5)),
                     itemBuilder: (_, i) => _buildCommentTile(_filtered[i]),
                   ),
                 ),
@@ -203,10 +203,10 @@ class _LiveCommentsScreenState extends State<LiveCommentsScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppTheme.accent.withOpacity(0.2),
+                          color: AppTheme.accent.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                              color: AppTheme.accent.withOpacity(0.5)),
+                              color: AppTheme.accent.withValues(alpha: 0.5)),
                         ),
                         child: Text(
                           'Chốt: ${c.chot}',
@@ -237,7 +237,7 @@ class _LiveCommentsScreenState extends State<LiveCommentsScreen> {
                 Text(
                   c.timecomment ?? '',
                   style: TextStyle(
-                      color: AppTheme.textSecondary.withOpacity(0.6),
+                      color: AppTheme.textSecondary.withValues(alpha: 0.6),
                       fontSize: 11),
                 ),
               ],
@@ -249,7 +249,7 @@ class _LiveCommentsScreenState extends State<LiveCommentsScreen> {
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: AppTheme.primary.withOpacity(0.15),
+                    color: AppTheme.primary.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
                   child: Text(

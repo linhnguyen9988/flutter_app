@@ -42,7 +42,9 @@ class AvatarWidget extends StatelessWidget {
       const Color(0xFF00BCD4),
     ];
     int hash = 0;
-    for (final c in id.codeUnits) hash = (hash * 31 + c) & 0xFFFFFFFF;
+    for (final c in id.codeUnits) {
+      hash = (hash * 31 + c) & 0xFFFFFFFF;
+    }
     return colors[hash % colors.length];
   }
 }

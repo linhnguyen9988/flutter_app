@@ -112,18 +112,22 @@ class Order {
 
   static Color statusColor(int? code) {
     if (code == null) return const Color(0xFFB0B3B8);
-    if (code == 501)
+    if (code == 501) {
       return const Color(0xFF42B72A); // Phát thành công → xanh lá
+    }
     if (code == 107 || code == 503) return const Color(0xFFB0B3B8); // Hủy → xám
-    if (code == 502 || code == 504 || code == 551)
+    if (code == 502 || code == 504 || code == 551) {
       return Colors.red; // Hoàn + đang chuyển hoàn → đỏ
-    if (code == 505 || code == 506 || code == 507)
+    }
+    if (code == 505 || code == 506 || code == 507) {
       return const Color.fromARGB(255, 197, 130, 4); // Tồn (có vấn đề) → cam
+    }
     if (code >= 500) return const Color(0xFF1877F2); // Đang phát → xanh dương
     if (code >= 300) return const Color(0xFF00BCD4); // Vận chuyển → cyan
     if (code >= 200) return const Color(0xFF9C27B0); // Nhận hàng → tím
-    if (code >= 100)
+    if (code >= 100) {
       return const Color.fromARGB(255, 233, 219, 31); // Mới tạo → cam
+    }
     return const Color(0xFFB0B3B8);
   }
 
@@ -138,6 +142,6 @@ class Order {
       if (i > 0 && (str.length - i) % 3 == 0) buf.write('.');
       buf.write(str[i]);
     }
-    return '${buf}đ';
+    return '$bufđ';
   }
 }

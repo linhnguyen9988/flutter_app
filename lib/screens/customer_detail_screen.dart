@@ -129,15 +129,14 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
 
     if (image.isNotEmpty) {
       final lower = image.toLowerCase();
-      // sticker like của Facebook thường có 'like' trong URL, hoặc id 369239263222822
       final isLike = lower.contains('like') ||
           lower.contains('369239263222822') ||
           lower.contains('sticker');
-      if (isLike) return '${prefix}👍';
-      return '${prefix}Hình ảnh'; // <-- hình thật
+      if (isLike) return '$prefix👍';
+      return '${prefix}Hình ảnh';
     }
 
-    return '${prefix}(Tin nhắn)';
+    return '$prefix(Tin nhắn)';
   }
 
   Future<void> _loadRecentOrders() async {
@@ -303,17 +302,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
       return val;
     }
 
-    String formatMoney(int n) {
-      if (n == 0) return '0đ';
-      final s = n.toString();
-      final buf = StringBuffer();
-      for (int i = 0; i < s.length; i++) {
-        if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
-        buf.write(s[i]);
-      }
-      return '${buf.toString()}đ';
-    }
-
     String formatMoneyK(int n) {
       if (n == 0) return '0';
       if (n % 1000 == 0) return '${n ~/ 1000}k';
@@ -331,11 +319,12 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
     if (chotItems.isEmpty) {
       return Row(children: [
         Icon(Icons.live_tv_outlined,
-            size: 13, color: AppTheme.textSecondary.withOpacity(0.5)),
+            size: 13, color: AppTheme.textSecondary.withValues(alpha: 0.5)),
         const SizedBox(width: 5),
         Text('Chưa chốt trong live đang xem',
             style: TextStyle(
-                color: AppTheme.textSecondary.withOpacity(0.6), fontSize: 11)),
+                color: AppTheme.textSecondary.withValues(alpha: 0.6),
+                fontSize: 11)),
       ]);
     }
 
@@ -350,7 +339,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
       totalSl += qty;
     }
 
-    String _buildChotMessage() {
+    String buildChotMessage() {
       final name = _customer.fbname ?? _customer.displayName;
       const pronoun = 'chị';
       final sortedPrices = priceQtyMap.keys.toList()..sort();
@@ -377,7 +366,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
                   builder: (_) => ChatScreen(
                     sender: _customer.userid!,
                     pageId: _customer.pageid ?? '',
-                    initialMessage: _buildChotMessage(),
+                    initialMessage: buildChotMessage(),
                     selectedLiveIds: widget.selectedLiveIds,
                     liveComments: widget.liveComments,
                   ),
@@ -387,10 +376,10 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: AppTheme.primary.withOpacity(0.12),
+          color: AppTheme.primary.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(8),
-          border:
-              Border.all(color: AppTheme.primary.withOpacity(0.3), width: 1),
+          border: Border.all(
+              color: AppTheme.primary.withValues(alpha: 0.3), width: 1),
         ),
         child: Row(children: [
           Icon(Icons.live_tv, size: 13, color: AppTheme.primary),
@@ -405,7 +394,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
           ),
           const SizedBox(width: 4),
           Icon(Icons.send_outlined,
-              size: 13, color: AppTheme.primary.withOpacity(0.7)),
+              size: 13, color: AppTheme.primary.withValues(alpha: 0.7)),
         ]),
       ),
     );
@@ -874,10 +863,11 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                   decoration: BoxDecoration(
-                    color: _labelColor(_selectedLabel).withOpacity(0.15),
+                    color: _labelColor(_selectedLabel).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                        color: _labelColor(_selectedLabel).withOpacity(0.4)),
+                        color:
+                            _labelColor(_selectedLabel).withValues(alpha: 0.4)),
                   ),
                   child: Text(_selectedLabel,
                       style: TextStyle(
@@ -1029,8 +1019,9 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
                               );
                             }),
                             onChanged: (i) {
-                              if (i != null)
+                              if (i != null) {
                                 setState(() => _selectedAddressIndex = i);
+                              }
                             },
                           ),
                         ),
@@ -1084,7 +1075,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
                         if (i > 0)
                           Divider(
                               height: 0,
-                              color: AppTheme.darkSurface.withOpacity(0.5),
+                              color:
+                                  AppTheme.darkSurface.withValues(alpha: 0.5),
                               indent: 16,
                               endIndent: 16),
                         InkWell(
@@ -1153,7 +1145,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
                   borderRadius: BorderRadius.circular(8), // <-- từ 12 xuống 8
                   border: _isEditing('note')
                       ? Border.all(
-                          color: AppTheme.primary.withOpacity(0.4), width: 1)
+                          color: AppTheme.primary.withValues(alpha: 0.4),
+                          width: 1)
                       : null, // thêm viền mảnh khi edit
                 ),
                 child: _isEditing('note')
@@ -1167,7 +1160,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
                         decoration: InputDecoration(
                           hintText: 'Thêm ghi chú...',
                           hintStyle: TextStyle(
-                              color: AppTheme.textSecondary.withOpacity(0.6)),
+                              color: AppTheme.textSecondary
+                                  .withValues(alpha: 0.6)),
                           contentPadding:
                               const EdgeInsets.fromLTRB(12, 12, 36, 12),
                           border: OutlineInputBorder(
@@ -1196,7 +1190,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
                               : _noteCtrl.text,
                           style: TextStyle(
                               color: _noteCtrl.text.isEmpty
-                                  ? AppTheme.textSecondary.withOpacity(0.5)
+                                  ? AppTheme.textSecondary
+                                      .withValues(alpha: 0.5)
                                   : AppTheme.textPrimary,
                               fontSize: 14),
                         )),
@@ -1212,7 +1207,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
   InputDecoration _orderInput(String hint, IconData icon) => InputDecoration(
         hintText: hint,
         hintStyle: TextStyle(
-            color: AppTheme.textSecondary.withOpacity(0.6), fontSize: 12),
+            color: AppTheme.textSecondary.withValues(alpha: 0.6), fontSize: 12),
         prefixIcon: Icon(icon, color: AppTheme.textSecondary, size: 16),
         filled: true,
         fillColor: AppTheme.darkSurface,
@@ -1230,29 +1225,26 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
         ? 'Chưa có nhãn  —  nhấn đúp để sửa'
         : _selectedLabel;
     final labelColor = _selectedLabel.isEmpty
-        ? AppTheme.textSecondary.withOpacity(0.5)
+        ? AppTheme.textSecondary.withValues(alpha: 0.5)
         : _labelColor(_selectedLabel);
     final editing = _isEditing('label');
     return GestureDetector(
       onDoubleTap: () {
         _startEdit('label');
-        Future.delayed(const Duration(milliseconds: 100), () {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
-
-          final context = _labelKey.currentContext;
-          if (context == null) return;
+          final labelContext = _labelKey.currentContext;
+          if (labelContext == null) return;
           void triggerTap(Element element) {
             if (element.widget is GestureDetector) {
-              final gestureDetector = element.widget as GestureDetector;
-              if (gestureDetector.onTap != null) {
-                gestureDetector.onTap!();
-                return;
-              }
+              final gesture = element.widget as GestureDetector;
+              gesture.onTap?.call();
+              return;
             }
             element.visitChildren(triggerTap);
           }
 
-          context.visitChildElements(triggerTap);
+          labelContext.visitChildElements(triggerTap);
         });
       },
       child: Padding(
@@ -1363,7 +1355,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
                 : _lastMessage == null
                     ? Text('Chưa có tin nhắn',
                         style: TextStyle(
-                            color: AppTheme.textSecondary.withOpacity(0.5),
+                            color:
+                                AppTheme.textSecondary.withValues(alpha: 0.5),
                             fontSize: 13))
                     : Row(children: [
                         Expanded(
@@ -1512,7 +1505,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
                     : Text(ctrl.text.isEmpty ? '—  nhấn đúp để sửa' : ctrl.text,
                         style: TextStyle(
                             color: ctrl.text.isEmpty
-                                ? AppTheme.textSecondary.withOpacity(0.5)
+                                ? AppTheme.textSecondary.withValues(alpha: 0.5)
                                 : AppTheme.textPrimary,
                             fontSize: 13)),
           ),

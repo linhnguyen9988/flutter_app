@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../theme/app_theme.dart';
 import '../models/live_comment.dart';
 import '../services/api_service.dart';
@@ -16,10 +14,12 @@ const String _mainBackendUrl = 'https://aodaigiabao.com';
 class MessagingScreen extends StatefulWidget {
   final List<String> Function()? getLiveIds;
   final List<LiveComment> Function()? getLiveComments;
+  final void Function(int)? onUnreadChanged;
   const MessagingScreen({
     super.key,
     this.getLiveIds,
     this.getLiveComments,
+    this.onUnreadChanged,
   });
 
   @override
@@ -30,10 +30,15 @@ class MessagingScreenState extends State<MessagingScreen> {
   List<Map<String, dynamic>> _conversations = [];
   bool _loading = true;
   String _error = '';
-  IO.Socket? _socket;
+  io.Socket? _socket;
   bool _socketConnected = false;
   final _scrollCtrl = ScrollController();
-  Timer? _ticker; // <-- THÊM: tự refresh giờ
+  Timer? _ticker;
+
+  int get unreadCount => _conversations.where((c) => c['isNew'] == true).length;
+  void _notifyUnread() {
+    widget.onUnreadChanged?.call(unreadCount);
+  }
 
   @override
   void initState() {
@@ -49,7 +54,7 @@ class MessagingScreenState extends State<MessagingScreen> {
 
   @override
   void dispose() {
-    _ticker?.cancel(); // <-- THÊM
+    _ticker?.cancel();
     _socket?.disconnect();
     _socket?.dispose();
     _scrollCtrl.dispose();
@@ -65,9 +70,9 @@ class MessagingScreenState extends State<MessagingScreen> {
   }
 
   void _connectSocket() {
-    _socket = IO.io(
+    _socket = io.io(
       _mainBackendUrl,
-      IO.OptionBuilder()
+      io.OptionBuilder()
           .setTransports(['websocket'])
           .disableAutoConnect()
           .build(),
@@ -112,7 +117,6 @@ class MessagingScreenState extends State<MessagingScreen> {
         (c) => (c['khach_userid']?.toString() ?? '') == khachUserId,
       );
 
-      // --- FIX: phân biệt like vs ảnh ---
       String preview;
       if (text.isNotEmpty) {
         preview = text;
@@ -161,6 +165,7 @@ class MessagingScreenState extends State<MessagingScreen> {
         });
       }
     });
+    _notifyUnread();
   }
 
   Future<void> _loadMessages() async {
@@ -180,17 +185,20 @@ class MessagingScreenState extends State<MessagingScreen> {
           _conversations = data.cast<Map<String, dynamic>>();
           _loading = false;
         });
+        _notifyUnread();
       } else {
         setState(() {
           _error = 'Lỗi ${res.statusCode}';
           _loading = false;
         });
+        _notifyUnread();
       }
     } catch (e) {
       setState(() {
         _error = 'Không kết nối được server';
         _loading = false;
       });
+      _notifyUnread();
     }
   }
 
@@ -204,7 +212,6 @@ class MessagingScreenState extends State<MessagingScreen> {
     final image = (c['image'] ?? '').toString();
     final images = c['images'];
 
-    // --- FIX: ưu tiên msg, check like ---
     if (msg.isNotEmpty) {
       return '$prefix$msg';
     }
@@ -212,10 +219,10 @@ class MessagingScreenState extends State<MessagingScreen> {
       final lower = image.toLowerCase();
       final isLike =
           lower.contains('like') || lower.contains('369239263222822');
-      return isLike ? '${prefix}👍' : '${prefix}📷 Hình ảnh';
+      return isLike ? '$prefix👍' : '$prefix📷 Hình ảnh';
     }
     if (images != null && (images as List).isNotEmpty) {
-      return '${prefix}📷 Hình ảnh';
+      return '$prefix📷 Hình ảnh';
     }
     return '';
   }
@@ -350,7 +357,7 @@ class MessagingScreenState extends State<MessagingScreen> {
                         itemCount: _conversations.length,
                         separatorBuilder: (_, __) => Divider(
                             height: 0,
-                            color: AppTheme.darkSurface.withOpacity(0.5)),
+                            color: AppTheme.darkSurface.withValues(alpha: 0.5)),
                         itemBuilder: (_, i) {
                           final c = _conversations[i];
                           final khachId = _khachUserId(c);
@@ -378,6 +385,7 @@ class MessagingScreenState extends State<MessagingScreen> {
         );
         final current = idx >= 0 ? _conversations[idx] : c;
         setState(() => current['isNew'] = false);
+        _notifyUnread();
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -443,10 +451,10 @@ class MessagingScreenState extends State<MessagingScreen> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 5, vertical: 1),
                             decoration: BoxDecoration(
-                              color: labelColor.withOpacity(0.15),
+                              color: labelColor.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(4),
                               border: Border.all(
-                                  color: labelColor.withOpacity(0.4)),
+                                  color: labelColor.withValues(alpha: 0.4)),
                             ),
                             child: Text(label,
                                 style: TextStyle(

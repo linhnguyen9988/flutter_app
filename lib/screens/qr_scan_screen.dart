@@ -46,12 +46,13 @@ class _QrScanScreenState extends State<QrScanScreen>
     final saved = prefs.getString('qr_scan_mode');
     if (mounted) {
       setState(() {
-        if (saved == 'lenDon')
+        if (saved == 'lenDon') {
           _mode = _ScanMode.lenDon;
-        else if (saved == 'tinNhan')
+        } else if (saved == 'tinNhan') {
           _mode = _ScanMode.tinNhan;
-        else
+        } else {
           _mode = _ScanMode.chotDon;
+        }
       });
     }
   }
@@ -334,8 +335,9 @@ class _QrScanScreenState extends State<QrScanScreen>
                 controller: _camCtrl,
                 onDetect: (capture) {
                   final barcode = capture.barcodes.firstOrNull;
-                  if (barcode?.rawValue != null)
+                  if (barcode?.rawValue != null) {
                     _onQrDetected(barcode!.rawValue!);
+                  }
                 },
               ),
               Positioned.fill(
@@ -357,12 +359,12 @@ class _QrScanScreenState extends State<QrScanScreen>
                     decoration: BoxDecoration(
                       gradient: LinearGradient(colors: [
                         Colors.transparent,
-                        AppTheme.primary.withOpacity(0.8),
+                        AppTheme.primary.withValues(alpha: 0.8),
                         Colors.transparent,
                       ]),
                       boxShadow: [
                         BoxShadow(
-                          color: AppTheme.primary.withOpacity(0.3),
+                          color: AppTheme.primary.withValues(alpha: 0.3),
                           blurRadius: 6,
                           spreadRadius: 2,
                         )
@@ -381,7 +383,7 @@ class _QrScanScreenState extends State<QrScanScreen>
                         margin: const EdgeInsets.only(bottom: marginBelowMode),
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.08),
+                          color: Colors.white.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: Row(
@@ -407,14 +409,15 @@ class _QrScanScreenState extends State<QrScanScreen>
                                 ? 'Quét ID khách → mở chat'
                                 : 'Quét ID khách → mở trang lên đơn',
                         style: TextStyle(
-                            color: Colors.white.withOpacity(0.7), fontSize: 13),
+                            color: Colors.white.withValues(alpha: 0.7),
+                            fontSize: 13),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 6),
                       Text(
                         'Mã vận đơn (≥12 ký tự) → xem chi tiết đơn',
                         style: TextStyle(
-                            color: Colors.white.withOpacity(0.35),
+                            color: Colors.white.withValues(alpha: 0.35),
                             fontSize: 11),
                       ),
                       const SizedBox(height: 32),
@@ -545,7 +548,7 @@ class _QrOverlayPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.black.withOpacity(0.55)
+      ..color = Colors.black.withValues(alpha: 0.55)
       ..style = PaintingStyle.fill;
     final path = Path()
       ..fillType = PathFillType.evenOdd

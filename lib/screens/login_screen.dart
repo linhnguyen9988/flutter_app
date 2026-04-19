@@ -46,11 +46,12 @@ class _LoginScreenState extends State<LoginScreen>
     final available = await localAuth.canCheckBiometrics ||
         await localAuth.isDeviceSupported();
     final enabled = await auth.isBiometricEnabled();
-    if (mounted)
+    if (mounted) {
       setState(() {
         _biometricAvailable = available && enabled;
         _biometricEnabled = enabled;
       });
+    }
   }
 
   Future<void> _loginBiometric() async {
@@ -159,7 +160,7 @@ class _LoginScreenState extends State<LoginScreen>
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
+                                  color: Colors.black.withValues(alpha: 0.1),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 )
@@ -237,10 +238,10 @@ class _LoginScreenState extends State<LoginScreen>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 14, vertical: 10),
                         decoration: BoxDecoration(
-                          color: Colors.red.withOpacity(0.1),
+                          color: Colors.red.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
-                          border:
-                              Border.all(color: Colors.red.withOpacity(0.2)),
+                          border: Border.all(
+                              color: Colors.red.withValues(alpha: 0.2)),
                         ),
                         child: Row(
                           children: [
@@ -263,7 +264,7 @@ class _LoginScreenState extends State<LoginScreen>
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primary,
                           disabledBackgroundColor:
-                              AppTheme.primary.withOpacity(0.5),
+                              AppTheme.primary.withValues(alpha: 0.5),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16)),
                           elevation: 0,
@@ -299,9 +300,10 @@ class _LoginScreenState extends State<LoginScreen>
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                  color: AppTheme.primary.withOpacity(0.4),
+                                  color:
+                                      AppTheme.primary.withValues(alpha: 0.4),
                                   width: 1.5),
-                              color: AppTheme.primary.withOpacity(0.08),
+                              color: AppTheme.primary.withValues(alpha: 0.08),
                             ),
                             child: const Icon(Icons.fingerprint,
                                 color: AppTheme.primary, size: 30),
@@ -318,7 +320,8 @@ class _LoginScreenState extends State<LoginScreen>
                       child: Text(
                         'ADGB Version 1.0.0',
                         style: TextStyle(
-                            color: AppTheme.textSecondary.withOpacity(0.4),
+                            color:
+                                AppTheme.textSecondary.withValues(alpha: 0.4),
                             fontSize: 12),
                       ),
                     ),
@@ -350,7 +353,8 @@ class _LoginScreenState extends State<LoginScreen>
   }) =>
       InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(color: AppTheme.textSecondary.withOpacity(0.5)),
+        hintStyle:
+            TextStyle(color: AppTheme.textSecondary.withValues(alpha: 0.5)),
         prefixIcon: Icon(icon, color: AppTheme.textSecondary, size: 20),
         suffixIcon: suffix,
         filled: true,

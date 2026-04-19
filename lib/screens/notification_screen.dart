@@ -93,8 +93,9 @@ class _NotificationScreenState extends State<NotificationScreen>
         Uri.parse('\${ApiService.baseUrl}/notifications/\$id'),
         headers: _headers,
       );
-      if (mounted)
+      if (mounted) {
         setState(() => _notis.removeWhere((n) => n['id']?.toString() == id));
+      }
     } catch (_) {}
   }
 
@@ -106,7 +107,9 @@ class _NotificationScreenState extends State<NotificationScreen>
       );
       if (mounted) {
         setState(() {
-          for (final n in _notis) n['is_read'] = 1;
+          for (final n in _notis) {
+            n['is_read'] = 1;
+          }
         });
       }
       await NotificationService.cancelAll();
@@ -262,7 +265,7 @@ class _NotificationScreenState extends State<NotificationScreen>
                         itemCount: _notis.length,
                         separatorBuilder: (_, __) => Divider(
                           height: 0,
-                          color: AppTheme.darkSurface.withOpacity(0.5),
+                          color: AppTheme.darkSurface.withValues(alpha: 0.5),
                         ),
                         itemBuilder: (_, i) {
                           final n = _notis[i];
@@ -338,7 +341,7 @@ class _NotificationScreenState extends State<NotificationScreen>
                               child: Container(
                                 color: read
                                     ? Colors.transparent
-                                    : AppTheme.primary.withOpacity(0.06),
+                                    : AppTheme.primary.withValues(alpha: 0.06),
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 16,
                                   vertical: 14,
@@ -352,7 +355,7 @@ class _NotificationScreenState extends State<NotificationScreen>
                                       decoration: BoxDecoration(
                                         color: _statusColor(
                                           statusCode,
-                                        ).withOpacity(0.12),
+                                        ).withValues(alpha: 0.12),
                                         shape: BoxShape.circle,
                                       ),
                                       child: Center(
@@ -428,7 +431,7 @@ class _NotificationScreenState extends State<NotificationScreen>
                                               time,
                                               style: TextStyle(
                                                 color: AppTheme.textSecondary
-                                                    .withOpacity(0.6),
+                                                    .withValues(alpha: 0.6),
                                                 fontSize: 11,
                                               ),
                                             ),

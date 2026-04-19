@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../models/customer.dart';
 import '../models/live_comment.dart';
-import '../models/page_info.dart';
 import '../services/api_service.dart';
 import '../widgets/app_sidebar.dart';
 import '../widgets/page_filter_chip.dart';
@@ -97,7 +96,7 @@ class CustomersScreenState extends State<CustomersScreen> {
                 isDense: true,
                 hintText: 'Tên, sđt... (${_customers.length})',
                 hintStyle: TextStyle(
-                    color: AppTheme.textSecondary.withOpacity(0.7),
+                    color: AppTheme.textSecondary.withValues(alpha: 0.7),
                     fontSize: 14),
                 prefixIcon: const Icon(Icons.search,
                     color: AppTheme.textSecondary, size: 20),
@@ -180,7 +179,7 @@ class CustomersScreenState extends State<CustomersScreen> {
                     itemCount: _customers.length,
                     separatorBuilder: (_, __) => Divider(
                         height: 0,
-                        color: AppTheme.darkSurface.withOpacity(0.5)),
+                        color: AppTheme.darkSurface.withValues(alpha: 0.5)),
                     itemBuilder: (_, i) => _buildCustomerTile(_customers[i]),
                   ),
                 ),

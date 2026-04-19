@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:image_picker/image_picker.dart';
 import '../theme/app_theme.dart';
 import '../models/message.dart';
@@ -51,7 +51,7 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _hasMore = true;
   bool _loadingMore = false;
   final _picker = ImagePicker();
-  IO.Socket? _socket;
+  io.Socket? _socket;
   // ignore: unused_field
   bool _isLoadingHistory = false;
   bool _initialLoad = true;
@@ -103,9 +103,9 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _connectSocket() {
-    _socket = IO.io(
+    _socket = io.io(
       'https://aodaigiabao.com',
-      IO.OptionBuilder()
+      io.OptionBuilder()
           .setTransports(['websocket'])
           .disableAutoConnect()
           .build(),
@@ -848,7 +848,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         color:
                             (_replyCtrl.text.isNotEmpty || _pickedImage != null)
                                 ? AppTheme.primary
-                                : AppTheme.textSecondary.withOpacity(0.3),
+                                : AppTheme.textSecondary.withValues(alpha: 0.3),
                       ),
                       child: const Icon(
                         Icons.arrow_upward_rounded,
