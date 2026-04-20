@@ -801,7 +801,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
             tooltip: 'Quét QR',
             onPressed: () {
               Navigator.of(context)
-                ..pop() // đóng CustomerDetailScreen
+                ..pop()
                 ..push(PageRouteBuilder(
                   pageBuilder: (_, __, ___) =>
                       QrScanScreen(liveComments: widget.liveComments),
@@ -1142,12 +1142,12 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
               child: Container(
                 decoration: BoxDecoration(
                   color: AppTheme.darkCard,
-                  borderRadius: BorderRadius.circular(8), // <-- từ 12 xuống 8
+                  borderRadius: BorderRadius.circular(8),
                   border: _isEditing('note')
                       ? Border.all(
                           color: AppTheme.primary.withValues(alpha: 0.4),
                           width: 1)
-                      : null, // thêm viền mảnh khi edit
+                      : null,
                 ),
                 child: _isEditing('note')
                     ? TextField(
@@ -1183,7 +1183,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
                           ),
                         ))
                     : Padding(
-                        padding: const EdgeInsets.all(12), // giảm từ 16
+                        padding: const EdgeInsets.all(12),
                         child: Text(
                           _noteCtrl.text.isEmpty
                               ? 'Chưa có ghi chú  —  nhấn đúp để sửa'

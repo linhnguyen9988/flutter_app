@@ -15,7 +15,6 @@ final RouteObserver<ModalRoute<void>> routeObserver =
 
 Future<void> main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
-  // Giữ splash native trong suốt quá trình khởi tạo
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
   await Firebase.initializeApp();
@@ -79,7 +78,6 @@ class _AppEntryState extends State<AppEntry> {
     } finally {
       if (mounted) {
         setState(() => _checking = false);
-        // Tắt splash ngay khi đã check xong
         FlutterNativeSplash.remove();
       }
     }
@@ -88,7 +86,6 @@ class _AppEntryState extends State<AppEntry> {
   @override
   Widget build(BuildContext context) {
     if (_checking) {
-      // Trả về widget rỗng, splash native vẫn đang che ở dưới
       return const SizedBox.shrink();
     }
     final auth = context.watch<AuthService>();

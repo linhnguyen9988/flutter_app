@@ -113,9 +113,8 @@ class MessagingScreenState extends State<MessagingScreen> {
     if (khachUserId.isEmpty) return;
 
     setState(() {
-      final idx = _conversations.indexWhere(
-        (c) => (c['khach_userid']?.toString() ?? '') == khachUserId,
-      );
+      final idx =
+          _conversations.indexWhere((c) => _khachUserId(c) == khachUserId);
 
       String preview;
       if (text.isNotEmpty) {
@@ -130,12 +129,26 @@ class MessagingScreenState extends State<MessagingScreen> {
         preview = '';
       }
 
+      final isNewFlag = !isEcho;
+
+      if (idx >= 0) {
+        final existing = _conversations[idx];
+        final oldTs =
+            int.tryParse((existing['timestamp'] ?? '0').toString()) ?? 0;
+        final newTs = int.tryParse(ts) ?? 0;
+        if (existing['message'] == preview &&
+            (newTs - oldTs).abs() < 2000 &&
+            existing['is_echo'] == isEcho) {
+          return;
+        }
+      }
+
       if (idx >= 0) {
         final existing = Map<String, dynamic>.from(_conversations[idx]);
         existing['message'] = preview;
         existing['time'] = ts;
         existing['timestamp'] = ts;
-        existing['isNew'] = true;
+        existing['isNew'] = isNewFlag;
         existing['is_echo'] = isEcho;
         if (image.isNotEmpty) existing['image'] = image;
         if (fbname.isNotEmpty) existing['ten_khach'] = fbname;
@@ -161,7 +174,7 @@ class MessagingScreenState extends State<MessagingScreen> {
           'picture': picture,
           'ten_khach': fbname.isNotEmpty ? fbname : khachUserId,
           'label': label,
-          'isNew': true,
+          'isNew': isNewFlag,
         });
       }
     });
@@ -181,8 +194,37 @@ class MessagingScreenState extends State<MessagingScreen> {
       });
       if (res.statusCode == 200) {
         final List data = json.decode(utf8.decode(res.bodyBytes));
+        final Map<String, Map<String, dynamic>> merged = {};
+        for (final raw in data) {
+          final m = Map<String, dynamic>.from(raw);
+          final uid = _khachUserId(m);
+          if (uid.isEmpty) continue;
+          m['khach_userid'] = uid;
+          m['isNew'] = !_isEcho(m) && (m['isNew'] == true || m['isNew'] == 1);
+          final curTs =
+              int.tryParse((m['timestamp'] ?? m['time'] ?? '0').toString()) ??
+                  0;
+          final old = merged[uid];
+          if (old == null) {
+            merged[uid] = m;
+          } else {
+            final oldTs = int.tryParse(
+                    (old['timestamp'] ?? old['time'] ?? '0').toString()) ??
+                0;
+            if (curTs > oldTs) merged[uid] = m;
+          }
+        }
         setState(() {
-          _conversations = data.cast<Map<String, dynamic>>();
+          _conversations = merged.values.toList()
+            ..sort((a, b) {
+              final ta = int.tryParse(
+                      (a['timestamp'] ?? a['time'] ?? '0').toString()) ??
+                  0;
+              final tb = int.tryParse(
+                      (b['timestamp'] ?? b['time'] ?? '0').toString()) ??
+                  0;
+              return tb.compareTo(ta);
+            });
           _loading = false;
         });
         _notifyUnread();
@@ -241,7 +283,6 @@ class MessagingScreenState extends State<MessagingScreen> {
   String _khachUserId(Map<String, dynamic> c) {
     final uid = c['khach_userid']?.toString() ?? '';
     if (uid.isNotEmpty) return uid;
-
     final isEcho = _isEcho(c);
     return isEcho
         ? c['recipient']?.toString() ?? ''
@@ -329,7 +370,7 @@ class MessagingScreenState extends State<MessagingScreen> {
         ]),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 4),
+            padding: const EdgeInsets.only(right: 2),
             child: IconButton(
               icon: const Icon(Icons.refresh),
               onPressed: _loadMessages,
@@ -381,7 +422,7 @@ class MessagingScreenState extends State<MessagingScreen> {
     return InkWell(
       onTap: () {
         final idx = _conversations.indexWhere(
-          (x) => (x['khach_userid']?.toString() ?? '') == khachId,
+          (x) => _khachUserId(x) == khachId,
         );
         final current = idx >= 0 ? _conversations[idx] : c;
         setState(() => current['isNew'] = false);

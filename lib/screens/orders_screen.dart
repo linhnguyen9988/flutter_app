@@ -196,7 +196,7 @@ class OrdersScreenState extends State<OrdersScreen> {
         ),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 4),
+            padding: const EdgeInsets.only(right: 2),
             child: IconButton(
               icon: const Icon(Icons.refresh),
               onPressed: _loadOrders,

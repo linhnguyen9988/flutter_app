@@ -407,7 +407,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
             : _buildAppBarLiveSelector(),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 4),
+            padding: const EdgeInsets.only(right: 2),
             child: Icon(Icons.circle,
                 size: 10,
                 color: _socketConnected ? AppTheme.accent : Colors.red),
@@ -433,12 +433,15 @@ class ChotDonScreenState extends State<ChotDonScreen>
               });
             },
           ),
-          IconButton(
-            padding: const EdgeInsets.only(right: 8),
-            icon: const Icon(Icons.refresh),
-            onPressed: _selectedLives.isNotEmpty
-                ? _reloadAllComments
-                : _loadLivestreams,
+          Padding(
+            padding: const EdgeInsets.only(right: 2),
+            child: IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _selectedLives.isNotEmpty
+                  ? _reloadAllComments
+                  : _loadLivestreams,
+              visualDensity: VisualDensity.compact,
+            ),
           ),
           IconButton(
             icon: const Icon(Icons.settings_outlined),
@@ -745,7 +748,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
             builder: (_) => CustomerDetailScreen(
               customer: customer,
               selectedLiveIds: selectedLiveIds,
-              liveComments: _comments, // truyền comments để lấy đúng gia
+              liveComments: _comments,
             ),
           ),
         );
@@ -1857,7 +1860,6 @@ class ChotDonScreenState extends State<ChotDonScreen>
       });
       if (mounted) {
         setState(() {
-          // 1. update list chính
           final idx = _comments.indexWhere((x) => x.commentid == c.commentid);
           if (idx >= 0) {
             _comments[idx] = LiveComment.fromJson({

@@ -44,7 +44,6 @@ class _HomeScreenState extends State<HomeScreen>
   late final AnimationController _bannerAnim;
   late final Animation<Offset> _bannerSlide;
 
-  // THÊM: số tin chưa đọc
   int _unreadMessages = 0;
 
   @override
@@ -73,7 +72,6 @@ class _HomeScreenState extends State<HomeScreen>
         getLiveIds: () => _chotDonKey.currentState?.selectedLiveIds ?? [],
         getLiveComments: () => _chotDonKey.currentState?.comments ?? [],
         onUnreadChanged: (count) {
-          // THÊM CALLBACK
           if (mounted) setState(() => _unreadMessages = count);
         },
       ),
@@ -277,7 +275,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _navItem(int index, IconData icon, IconData activeIcon, String label) {
     final isSelected = _currentIndex == index;
-    final showBadge = index == 2 && _unreadMessages > 0; // tab Tin nhắn
+    final showBadge = index == 2 && _unreadMessages > 0;
 
     return GestureDetector(
       onTap: () => setState(() => _currentIndex = index),

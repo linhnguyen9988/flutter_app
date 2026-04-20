@@ -27,7 +27,6 @@ class _NotificationScreenState extends State<NotificationScreen>
   void initState() {
     super.initState();
     _load();
-    // Lắng nghe FCM mới, insert lên đầu list realtime
     _notiSub = NotificationService.onNewNoti.listen((noti) {
       if (mounted) setState(() => _notis.insert(0, noti));
     });
@@ -55,7 +54,6 @@ class _NotificationScreenState extends State<NotificationScreen>
       _error = null;
     });
     try {
-      // Backend dùng req.user.id (từ JWT) để query userid trong bảng users
       final uri = Uri.parse('${ApiService.baseUrl}/notifications');
       final res = await http.get(uri, headers: _headers);
       if (res.statusCode == 200) {
@@ -80,7 +78,6 @@ class _NotificationScreenState extends State<NotificationScreen>
         headers: _headers,
       );
       if (mounted) setState(() => noti['is_read'] = 1);
-      // Cancel notification khỏi status bar theo noti_id
       NotificationService.cancelByNotiId(id);
     } catch (_) {}
   }
