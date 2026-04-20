@@ -76,6 +76,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
     _socket?.off('new-comment');
     _socket?.off('new-chot');
     _socket?.off('new-xa');
+    _socket?.off('new-livestream');
 
     _socket?.disconnect();
     _socket?.dispose();
@@ -189,6 +190,31 @@ class ChotDonScreenState extends State<ChotDonScreen>
           });
         }
       });
+    });
+
+    _socket!.on('new-livestream', (data) {
+      if (!mounted) return;
+      try {
+        final d = Map<String, dynamic>.from(data as Map);
+        final id = d['liveid']?.toString() ?? d['id']?.toString();
+        if (id == null || id.isEmpty) return;
+
+        setState(() {
+          final exists = _livestreams.any((l) => l['id'].toString() == id);
+          if (!exists) {
+            _livestreams.insert(0, {
+              'id': id,
+              'name': d['name'] ?? 'Live $id',
+              'status': d['status'] ?? 'LIVE',
+              'time': d['time'] ?? '',
+              'luotincuoi': d['luotincuoi'] ?? 0,
+            });
+            if (_livestreams.length > 5) {
+              _livestreams.removeLast();
+            }
+          }
+        });
+      } catch (_) {}
     });
 
     _socket!.connect();
@@ -1965,55 +1991,48 @@ class _RetryAvatar extends StatefulWidget {
 }
 
 class _RetryAvatarState extends State<_RetryAvatar> {
+  String? _baseUrl;
   String? _url;
-  bool _triedFallback = false;
-  bool _loaded = false;
+  int _retryCount = 0;
+  static const int _maxRetries = 3;
 
   @override
   void initState() {
     super.initState();
-    _url = (widget.primaryUrl?.isNotEmpty == true)
-        ? widget.primaryUrl
-        : _fallbackUrl;
+    _setBaseUrl();
   }
 
   @override
   void didUpdateWidget(_RetryAvatar oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.primaryUrl != widget.primaryUrl ||
-        oldWidget.userid != widget.userid) {
-      _loaded = false;
-      _triedFallback = false;
-      _url = (widget.primaryUrl?.isNotEmpty == true)
-          ? widget.primaryUrl
-          : _fallbackUrl;
+    if (oldWidget.userid != widget.userid) {
+      _retryCount = 0;
+      _setBaseUrl();
     }
   }
 
-  String? get _fallbackUrl {
+  void _setBaseUrl() {
     final uid = widget.userid;
     if (uid != null && uid.isNotEmpty) {
-      return 'https://aodaigiabao.com/images/ava/$uid.jpg';
+      _baseUrl = 'https://aodaigiabao.com/images/ava/$uid.jpg';
+      _url = _baseUrl;
+    } else {
+      _baseUrl = null;
+      _url = null;
     }
-    return null;
   }
 
-  void _onError() {
-    _loaded = false;
-    if (_triedFallback) return;
-    final fb = _fallbackUrl;
-    if (fb == null || fb == _url) return;
-    Future.delayed(const Duration(milliseconds: 500), () {
+  void _scheduleRetry() {
+    if (_retryCount >= _maxRetries || !mounted || _baseUrl == null) return;
+
+    _retryCount++;
+    Future.delayed(const Duration(seconds: 2), () {
       if (!mounted) return;
       setState(() {
-        _triedFallback = true;
-        _url = fb;
+        _url =
+            '$_baseUrl?retry=$_retryCount&t=${DateTime.now().millisecondsSinceEpoch}';
       });
     });
-  }
-
-  void _onLoaded() {
-    if (!_loaded) _loaded = true;
   }
 
   @override
@@ -2042,12 +2061,9 @@ class _RetryAvatarState extends State<_RetryAvatar> {
           width: diameter,
           height: diameter,
           fit: BoxFit.cover,
-          frameBuilder: (_, child, frame, __) {
-            if (frame != null) _onLoaded();
-            return child;
-          },
+          key: ValueKey(_url),
           errorBuilder: (_, __, ___) {
-            _onError();
+            _scheduleRetry();
             return Container(
               width: diameter,
               height: diameter,

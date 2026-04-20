@@ -25,6 +25,7 @@ dependencies:
   local_auth: ^3.0.0
   google_fonts: ^8.0.2
   flutter_native_splash: ^2.4.0
+  wakelock_plus: ^1.6.0
 
 dev_dependencies:
   flutter_test:
@@ -45,7 +46,7 @@ flutter_launcher_icons:
 
 flutter_native_splash:
   color: "#FFFFFF"
-  color_dark: "#0A0A0A"   # <-- đủ 6 số, trước mình ghi thiếu
+  color_dark: "#0A0A0A" 
   image: assets/splash/gb_logo_splash.png
   image_dark: assets/splash/gb_logo_splash_white.png
   fullscreen: true
