@@ -7,6 +7,7 @@ import '../screens/notification_screen.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
+import '../main.dart' show ThemeService;
 
 class AppSidebar extends StatefulWidget {
   const AppSidebar({super.key});
@@ -34,6 +35,8 @@ class AppSidebar extends StatefulWidget {
 }
 
 class _AppSidebarState extends State<AppSidebar> {
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+
   bool _biometricEnabled = false;
   bool _biometricAvailable = false;
   final _localAuth = LocalAuthentication();
@@ -48,9 +51,7 @@ class _AppSidebarState extends State<AppSidebar> {
 
   Future<void> _loadUnreadCount() async {
     try {
-      final uri = Uri.parse(
-        '${ApiService.baseUrl}/notifications/unread-count',
-      );
+      final uri = Uri.parse('${ApiService.baseUrl}/notifications/unread-count');
       final res = await http.get(
         uri,
         headers: {
@@ -145,6 +146,13 @@ class _AppSidebarState extends State<AppSidebar> {
         'Người dùng';
     final username = user?['username']?.toString() ?? '';
 
+    final bgColor = isDark ? AppTheme.bgColor(isDark) : const Color(0xFFF0F2F5);
+    final headerColor = isDark ? AppTheme.cardColor(isDark) : Colors.white;
+    final textColor =
+        isDark ? AppTheme.textColor(isDark) : const Color(0xFF050505);
+    final subTextColor =
+        isDark ? AppTheme.textSubColor(isDark) : const Color(0xFF65676B);
+
     return Align(
       alignment: Alignment.centerLeft,
       child: Material(
@@ -152,20 +160,21 @@ class _AppSidebarState extends State<AppSidebar> {
         child: Container(
           width: MediaQuery.of(context).size.width * 0.78,
           height: double.infinity,
-          color: AppTheme.darkBg,
+          color: bgColor,
           child: SafeArea(
             child: Column(
               children: [
+                // Header
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-                  color: AppTheme.darkCard,
+                  color: headerColor,
                   child: Row(
                     children: [
                       Container(
                         width: 52,
                         height: 52,
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                           color: AppTheme.primary,
                           shape: BoxShape.circle,
                         ),
@@ -187,8 +196,8 @@ class _AppSidebarState extends State<AppSidebar> {
                           children: [
                             Text(
                               name,
-                              style: const TextStyle(
-                                color: Colors.white,
+                              style: TextStyle(
+                                color: textColor,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 16,
                               ),
@@ -197,7 +206,7 @@ class _AppSidebarState extends State<AppSidebar> {
                               Text(
                                 username,
                                 style: TextStyle(
-                                  color: AppTheme.textSecondary,
+                                  color: subTextColor,
                                   fontSize: 13,
                                 ),
                               ),
@@ -207,7 +216,10 @@ class _AppSidebarState extends State<AppSidebar> {
                     ],
                   ),
                 ),
+
                 const SizedBox(height: 8),
+
+                // Biometric
                 if (_biometricAvailable)
                   _SidebarTile(
                     icon: Icons.fingerprint,
@@ -219,18 +231,28 @@ class _AppSidebarState extends State<AppSidebar> {
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                   ),
+
+                // Theme switcher
+                const _ThemeSwitcherTile(),
+
+                // Notifications
                 _SidebarTile(
                   icon: Icons.notifications_outlined,
                   label: 'Thông báo',
                   onTap: _showNotifications,
                   badge: _unreadCount,
                 ),
+
+                // Change password
                 _SidebarTile(
                   icon: Icons.lock_outline,
                   label: 'Đổi mật khẩu',
                   onTap: _showChangePassword,
                 ),
+
                 const Spacer(),
+
+                // Logout button
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   child: GestureDetector(
@@ -246,9 +268,9 @@ class _AppSidebarState extends State<AppSidebar> {
                           width: 1,
                         ),
                       ),
-                      child: Row(
+                      child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
+                        children: [
                           Icon(Icons.logout, color: Colors.red, size: 18),
                           SizedBox(width: 8),
                           Text(
@@ -273,6 +295,149 @@ class _AppSidebarState extends State<AppSidebar> {
   }
 }
 
+// ─── Theme Switcher Tile ───────────────────────────────────────────────────
+
+enum _ThemeOption { light, dark, auto }
+
+class _ThemeSwitcherTile extends StatelessWidget {
+  const _ThemeSwitcherTile();
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final themeService = context.watch<ThemeService>();
+    final labelColor =
+        isDark ? AppTheme.textColor(isDark) : const Color(0xFF050505);
+    final subColor =
+        isDark ? AppTheme.textSubColor(isDark) : const Color(0xFF65676B);
+
+    // Xác định option hiện tại
+    final current = themeService.isAuto
+        ? _ThemeOption.auto
+        : themeService.themeMode == ThemeMode.dark
+            ? _ThemeOption.dark
+            : _ThemeOption.light;
+
+    final options = [
+      _ThemeOption.light,
+      _ThemeOption.dark,
+      _ThemeOption.auto,
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      child: Row(
+        children: [
+          Icon(
+            current == _ThemeOption.dark
+                ? Icons.dark_mode_outlined
+                : current == _ThemeOption.light
+                    ? Icons.light_mode_outlined
+                    : Icons.brightness_auto_outlined,
+            color: subColor,
+            size: 22,
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Giao diện',
+                  style: TextStyle(color: labelColor, fontSize: 15),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppTheme.surfaceColor(isDark)
+                        : const Color(0xFFE4E6EB),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: options.map((opt) {
+                      final selected = opt == current;
+                      return Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            switch (opt) {
+                              case _ThemeOption.light:
+                                themeService.setLight();
+                                break;
+                              case _ThemeOption.dark:
+                                themeService.setDark();
+                                break;
+                              case _ThemeOption.auto:
+                                themeService.setAuto();
+                                break;
+                            }
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            margin: const EdgeInsets.all(3),
+                            decoration: BoxDecoration(
+                              color: selected
+                                  ? AppTheme.primary
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(7),
+                              boxShadow: selected
+                                  ? [
+                                      BoxShadow(
+                                        color: AppTheme.primary
+                                            .withValues(alpha: 0.35),
+                                        blurRadius: 6,
+                                        offset: const Offset(0, 2),
+                                      )
+                                    ]
+                                  : [],
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  opt == _ThemeOption.light
+                                      ? Icons.light_mode
+                                      : opt == _ThemeOption.dark
+                                          ? Icons.dark_mode
+                                          : Icons.brightness_auto,
+                                  size: 13,
+                                  color: selected ? Colors.white : subColor,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  opt == _ThemeOption.light
+                                      ? 'Sáng'
+                                      : opt == _ThemeOption.dark
+                                          ? 'Tối'
+                                          : 'Tự động',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: selected
+                                        ? FontWeight.w700
+                                        : FontWeight.w400,
+                                    color: selected ? Colors.white : subColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Generic Sidebar Tile ─────────────────────────────────────────────────
+
 class _SidebarTile extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -290,6 +455,12 @@ class _SidebarTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor =
+        isDark ? AppTheme.textColor(isDark) : const Color(0xFF050505);
+    final subColor =
+        isDark ? AppTheme.textSubColor(isDark) : const Color(0xFF65676B);
+
     return InkWell(
       onTap: onTap,
       child: Container(
@@ -299,7 +470,7 @@ class _SidebarTile extends StatelessWidget {
             Stack(
               clipBehavior: Clip.none,
               children: [
-                Icon(icon, color: AppTheme.textSecondary, size: 22),
+                Icon(icon, color: subColor, size: 22),
                 if (badge > 0)
                   Positioned(
                     right: -4,
@@ -321,18 +492,13 @@ class _SidebarTile extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: const TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 15,
-                    ),
+                    style: TextStyle(color: textColor, fontSize: 15),
                   ),
                   if (badge > 0) ...[
                     const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
+                          horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
                         color: Colors.red,
                         borderRadius: BorderRadius.circular(10),
@@ -352,11 +518,7 @@ class _SidebarTile extends StatelessWidget {
             ),
             if (trailing != null) trailing!,
             if (trailing == null)
-              const Icon(
-                Icons.chevron_right,
-                color: AppTheme.textSecondary,
-                size: 18,
-              ),
+              Icon(Icons.chevron_right, color: subColor, size: 18),
           ],
         ),
       ),
@@ -364,12 +526,15 @@ class _SidebarTile extends StatelessWidget {
   }
 }
 
+// ─── Change Password Sheet ────────────────────────────────────────────────
+
 class _ChangePasswordSheet extends StatefulWidget {
   static void show(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppTheme.darkCard,
+      backgroundColor: AppTheme.cardColor(isDark),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -384,6 +549,8 @@ class _ChangePasswordSheet extends StatefulWidget {
 }
 
 class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+
   final _oldCtrl = TextEditingController();
   final _newCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
@@ -459,14 +626,14 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
             height: 4,
             margin: const EdgeInsets.only(bottom: 20),
             decoration: BoxDecoration(
-              color: AppTheme.darkSurface,
+              color: AppTheme.surfaceColor(isDark),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const Text(
+          Text(
             'Đổi mật khẩu',
             style: TextStyle(
-              color: Colors.white,
+              color: AppTheme.textColor(isDark),
               fontSize: 18,
               fontWeight: FontWeight.w700,
             ),
@@ -551,15 +718,17 @@ class _PassField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return TextField(
       controller: ctrl,
       obscureText: obscure,
-      style: const TextStyle(color: Colors.white, fontSize: 14),
+      style: TextStyle(color: AppTheme.textColor(isDark), fontSize: 14),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+        labelStyle:
+            TextStyle(color: AppTheme.textSubColor(isDark), fontSize: 13),
         filled: true,
-        fillColor: AppTheme.darkSurface,
+        fillColor: AppTheme.surfaceColor(isDark),
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 14,
@@ -572,7 +741,7 @@ class _PassField extends StatelessWidget {
         suffixIcon: IconButton(
           icon: Icon(
             obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-            color: AppTheme.textSecondary,
+            color: AppTheme.textSubColor(isDark),
             size: 18,
           ),
           onPressed: onToggle,

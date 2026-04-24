@@ -12,7 +12,6 @@ import 'api_service.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseBackgroundHandler(RemoteMessage message) async {
-  // Chạy trong isolate riêng khi app bị kill
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   await NotificationService.initForBackground();
@@ -33,7 +32,6 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
   static bool _initialized = false;
 
-  // Stream để broadcast noti mới đến các screen đang mở
   static final StreamController<Map<String, dynamic>> _newNotiController =
       StreamController<Map<String, dynamic>>.broadcast();
   static Stream<Map<String, dynamic>> get onNewNoti =>
@@ -106,7 +104,6 @@ class NotificationService {
     }
   }
 
-  // Dùng cho background isolate
   static Future<void> initForBackground() async {
     if (_initialized) return;
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');

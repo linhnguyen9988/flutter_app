@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -25,10 +27,73 @@ Future<void> main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthService()),
         ChangeNotifierProvider.value(value: ReloadService.instance),
+        ChangeNotifierProvider(create: (_) => ThemeService()),
       ],
       child: const MyApp(),
     ),
   );
+}
+
+/// Service quản lý theme, tự cập nhật mỗi phút khi ở chế độ auto
+class ThemeService extends ChangeNotifier {
+  ThemeMode _themeMode = AppTheme.themeByTime();
+  bool _isAuto = true; // mặc định: tự động theo giờ
+  Timer? _timer;
+
+  ThemeService() {
+    _startTimer();
+  }
+
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(minutes: 1), (_) {
+      if (_isAuto) {
+        final newMode = AppTheme.themeByTime();
+        if (newMode != _themeMode) {
+          _themeMode = newMode;
+          notifyListeners();
+        }
+      }
+    });
+  }
+
+  ThemeMode get themeMode => _themeMode;
+  bool get isAuto => _isAuto;
+  bool get isDark => _themeMode == ThemeMode.dark;
+
+  /// Cố định chế độ Sáng
+  void setLight() {
+    _isAuto = false;
+    _themeMode = ThemeMode.light;
+    notifyListeners();
+  }
+
+  /// Cố định chế độ Tối
+  void setDark() {
+    _isAuto = false;
+    _themeMode = ThemeMode.dark;
+    notifyListeners();
+  }
+
+  /// Tự động theo giờ hệ thống (6:00–17:59 sáng, còn lại tối)
+  void setAuto() {
+    _isAuto = true;
+    _themeMode = AppTheme.themeByTime();
+    notifyListeners();
+  }
+
+  /// Gọi khi app resume: nếu đang auto thì cập nhật lại theme
+  void resetToAuto() {
+    if (_isAuto) {
+      _themeMode = AppTheme.themeByTime();
+      notifyListeners();
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -36,12 +101,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeService = context.watch<ThemeService>();
     return MaterialApp(
       title: 'Áo Dài Gia Bảo',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.dark,
+      themeMode: themeService.themeMode,
       navigatorKey: NotificationService.navigatorKey,
       navigatorObservers: [routeObserver],
       home: const AppEntry(),
@@ -57,13 +123,14 @@ class AppEntry extends StatefulWidget {
 }
 
 class _AppEntryState extends State<AppEntry> with WidgetsBindingObserver {
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+
   bool _checking = true;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // bật wakelock ngay khi vào app
     WakelockPlus.enable();
     _checkAuth();
   }
@@ -79,6 +146,8 @@ class _AppEntryState extends State<AppEntry> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       WakelockPlus.enable();
+      // Khi resume lại app, cập nhật theme theo giờ hiện tại
+      context.read<ThemeService>().resetToAuto();
     } else if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {

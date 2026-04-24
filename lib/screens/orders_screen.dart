@@ -17,6 +17,8 @@ class OrdersScreen extends StatefulWidget {
 }
 
 class OrdersScreenState extends State<OrdersScreen> {
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+
   List<Order> _orders = [];
   bool _loading = true;
   String? _statusFilter;
@@ -103,18 +105,18 @@ class OrdersScreenState extends State<OrdersScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: AppTheme.darkCard,
-        title: const Text('Xác nhận hủy đơn',
-            style: TextStyle(color: Colors.white, fontSize: 16)),
+        backgroundColor: AppTheme.cardColor(isDark),
+        title: Text('Xác nhận hủy đơn',
+            style: TextStyle(color: AppTheme.textColor(isDark), fontSize: 16)),
         content: Text(
           'Hủy đơn ${order.realorderid ?? order.id.toString()}?\nThao tác này không thể hoàn tác.',
-          style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+          style: TextStyle(color: AppTheme.textSubColor(isDark), fontSize: 13),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Không',
-                style: TextStyle(color: AppTheme.textSecondary)),
+            child: Text('Không',
+                style: TextStyle(color: AppTheme.textSubColor(isDark))),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
@@ -127,22 +129,37 @@ class OrdersScreenState extends State<OrdersScreen> {
     );
     if (confirm != true) return;
 
+    final oldStatus = order.statuscode;
+    setState(() {
+      final idx = _orders.indexWhere((o) => o.id == order.id);
+      if (idx != -1) {
+        _orders[idx].statuscode = 107;
+      }
+    });
+
     try {
       final result = await ApiService.postRaw(
         'https://aodaigiabao.com/huydonviettel',
         {'realorderid': order.realorderid ?? '', 'xoa': 0},
       );
       if (!mounted) return;
-      final msg = result?['message']?.toString() ?? 'Đã gửi yêu cầu hủy';
+
+      final msg = result?['message']?.toString() ?? 'Đã hủy đơn';
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(msg), backgroundColor: Colors.red.shade700),
+        SnackBar(content: Text(msg), backgroundColor: Colors.green.shade700),
       );
+
       _loadOrders();
     } catch (_) {
       if (!mounted) return;
+      setState(() {
+        final idx = _orders.indexWhere((o) => o.id == order.id);
+        if (idx != -1) _orders[idx].statuscode = oldStatus;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Lỗi kết nối'), backgroundColor: Colors.red),
+            content: Text('Lỗi kết nối, chưa hủy được'),
+            backgroundColor: Colors.red),
       );
     }
   }
@@ -159,13 +176,13 @@ class OrdersScreenState extends State<OrdersScreen> {
             alignment: Alignment.centerLeft,
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
-              color: AppTheme.darkSurface,
+              color: AppTheme.surfaceColor(isDark),
               borderRadius: BorderRadius.circular(10),
             ),
             child: TextField(
               controller: _searchCtrl,
-              style: const TextStyle(
-                  color: Colors.white, fontSize: 14, height: 1.0),
+              style: TextStyle(
+                  color: AppTheme.textColor(isDark), fontSize: 14, height: 1.0),
               onChanged: (v) {
                 setState(() => _searchText = v);
                 _loadOrders();
@@ -174,9 +191,9 @@ class OrdersScreenState extends State<OrdersScreen> {
                 isDense: true,
                 hintText: 'Mã đơn, tên, sđt...',
                 hintStyle: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.45), fontSize: 14),
-                prefixIcon: const Icon(Icons.search,
-                    color: AppTheme.textSecondary, size: 20),
+                    color: AppTheme.textSubColor(isDark).withValues(alpha: 0.7), fontSize: 14),
+                prefixIcon: Icon(Icons.search,
+                    color: AppTheme.textSubColor(isDark), size: 20),
                 suffixIcon: _searchText.isNotEmpty
                     ? GestureDetector(
                         onTap: () {
@@ -184,8 +201,8 @@ class OrdersScreenState extends State<OrdersScreen> {
                           setState(() => _searchText = '');
                           _loadOrders();
                         },
-                        child: const Icon(Icons.close,
-                            color: AppTheme.textSecondary, size: 18),
+                        child: Icon(Icons.close,
+                            color: AppTheme.textSubColor(isDark), size: 18),
                       )
                     : null,
                 border: InputBorder.none,
@@ -238,7 +255,7 @@ class OrdersScreenState extends State<OrdersScreen> {
           : _orders.isEmpty
               ? Center(
                   child: Text('Không có đơn hàng',
-                      style: TextStyle(color: AppTheme.textSecondary)))
+                      style: TextStyle(color: AppTheme.textSubColor(isDark))))
               : RefreshIndicator(
                   onRefresh: _loadOrders,
                   color: AppTheme.primary,
@@ -246,7 +263,7 @@ class OrdersScreenState extends State<OrdersScreen> {
                     itemCount: _orders.length,
                     separatorBuilder: (_, __) => Divider(
                         height: 0,
-                        color: AppTheme.darkSurface.withValues(alpha: 0.5)),
+                        color: AppTheme.surfaceColor(isDark).withValues(alpha: 0.5)),
                     itemBuilder: (_, i) => _buildOrderTile(_orders[i]),
                   ),
                 ),
@@ -377,20 +394,20 @@ class OrdersScreenState extends State<OrdersScreen> {
                 )),
       ),
       child: Container(
-        color: AppTheme.darkBg,
+        color: AppTheme.bgColor(isDark),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             CircleAvatar(
               radius: 22,
-              backgroundColor: AppTheme.darkSurface,
+              backgroundColor: AppTheme.surfaceColor(isDark),
               backgroundImage:
                   avatarUrl != null ? NetworkImage(avatarUrl) : null,
               onBackgroundImageError: avatarUrl != null ? (_, __) {} : null,
               child: avatarUrl == null
-                  ? const Icon(Icons.person,
-                      color: AppTheme.textSecondary, size: 20)
+                  ? Icon(Icons.person,
+                      color: AppTheme.textSubColor(isDark), size: 20)
                   : null,
             ),
             const SizedBox(width: 12),
@@ -403,8 +420,8 @@ class OrdersScreenState extends State<OrdersScreen> {
                       Expanded(
                         child: _highlight(
                           order.name ?? 'Không có tên',
-                          const TextStyle(
-                            color: AppTheme.textPrimary,
+                          TextStyle(
+                            color: AppTheme.textColor(isDark),
                             fontWeight: FontWeight.w600,
                             fontSize: 15,
                           ),
@@ -433,8 +450,8 @@ class OrdersScreenState extends State<OrdersScreen> {
                   if (order.address != null && order.address!.isNotEmpty)
                     Text(
                       order.address!,
-                      style: const TextStyle(
-                          color: AppTheme.textSecondary, fontSize: 12),
+                      style: TextStyle(
+                          color: AppTheme.textSubColor(isDark), fontSize: 12),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -444,16 +461,16 @@ class OrdersScreenState extends State<OrdersScreen> {
                       if (order.phone != null)
                         _highlight(
                             '📱 ${order.phone}',
-                            const TextStyle(
-                                color: AppTheme.textSecondary, fontSize: 12)),
+                            TextStyle(
+                                color: AppTheme.textSubColor(isDark), fontSize: 12)),
                       if (order.phone != null && order.realorderid != null)
                         const Text('  ', style: TextStyle(fontSize: 12)),
                       if (order.realorderid != null)
                         Expanded(
                           child: _highlight(
                               '🔖 ${order.realorderid}',
-                              const TextStyle(
-                                  color: AppTheme.textSecondary, fontSize: 12),
+                              TextStyle(
+                                  color: AppTheme.textSubColor(isDark), fontSize: 12),
                               overflow: TextOverflow.ellipsis),
                         ),
                     ],
@@ -471,14 +488,14 @@ class OrdersScreenState extends State<OrdersScreen> {
                       if (order.kg != null) ...[
                         const SizedBox(width: 10),
                         Text('${order.kg}kg',
-                            style: const TextStyle(
-                                color: AppTheme.textSecondary, fontSize: 12)),
+                            style: TextStyle(
+                                color: AppTheme.textSubColor(isDark), fontSize: 12)),
                       ],
                       const Spacer(),
                       Text(
                         order.date ?? '',
-                        style: const TextStyle(
-                            color: AppTheme.textSecondary, fontSize: 11),
+                        style: TextStyle(
+                            color: AppTheme.textSubColor(isDark), fontSize: 11),
                       ),
                     ],
                   ),

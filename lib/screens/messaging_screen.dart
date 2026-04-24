@@ -27,6 +27,8 @@ class MessagingScreen extends StatefulWidget {
 }
 
 class MessagingScreenState extends State<MessagingScreen> {
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+
   List<Map<String, dynamic>> _conversations = [];
   bool _loading = true;
   String _error = '';
@@ -398,7 +400,7 @@ class MessagingScreenState extends State<MessagingScreen> {
                         itemCount: _conversations.length,
                         separatorBuilder: (_, __) => Divider(
                             height: 0,
-                            color: AppTheme.darkSurface.withValues(alpha: 0.5)),
+                            color: AppTheme.surfaceColor(isDark).withValues(alpha: 0.5)),
                         itemBuilder: (_, i) {
                           final c = _conversations[i];
                           final khachId = _khachUserId(c);
@@ -460,7 +462,7 @@ class MessagingScreenState extends State<MessagingScreen> {
                     decoration: BoxDecoration(
                       color: labelColor,
                       shape: BoxShape.circle,
-                      border: Border.all(color: AppTheme.darkBg, width: 1.5),
+                      border: Border.all(color: AppTheme.bgColor(isDark), width: 1.5),
                     ),
                   ),
                 ),
@@ -478,7 +480,7 @@ class MessagingScreenState extends State<MessagingScreen> {
                             name,
                             style: TextStyle(
                               color:
-                                  isNew ? Colors.white : AppTheme.textPrimary,
+                                  isNew ? AppTheme.textColor(isDark) : AppTheme.textColor(isDark),
                               fontWeight:
                                   isNew ? FontWeight.w700 : FontWeight.w500,
                               fontSize: 15,
@@ -510,7 +512,7 @@ class MessagingScreenState extends State<MessagingScreen> {
                       _formatTime(c['timestamp'] ?? c['time']),
                       style: TextStyle(
                         color:
-                            isNew ? AppTheme.primary : AppTheme.textSecondary,
+                            isNew ? AppTheme.primary : AppTheme.textSubColor(isDark),
                         fontSize: 11,
                         fontWeight: isNew ? FontWeight.w600 : FontWeight.w400,
                       ),
@@ -523,8 +525,8 @@ class MessagingScreenState extends State<MessagingScreen> {
                         preview,
                         style: TextStyle(
                           color: isNew
-                              ? AppTheme.textPrimary
-                              : AppTheme.textSecondary,
+                              ? AppTheme.textColor(isDark)
+                              : AppTheme.textSubColor(isDark),
                           fontSize: 13,
                           fontWeight: isNew ? FontWeight.w500 : FontWeight.w400,
                         ),
@@ -554,9 +556,9 @@ class MessagingScreenState extends State<MessagingScreen> {
           child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.cloud_off, color: AppTheme.textSecondary, size: 48),
+          Icon(Icons.cloud_off, color: AppTheme.textSubColor(isDark), size: 48),
           const SizedBox(height: 12),
-          Text(_error, style: TextStyle(color: AppTheme.textSecondary)),
+          Text(_error, style: TextStyle(color: AppTheme.textSubColor(isDark))),
           const SizedBox(height: 8),
           ElevatedButton(
               onPressed: _loadMessages, child: const Text('Thử lại')),
@@ -567,11 +569,11 @@ class MessagingScreenState extends State<MessagingScreen> {
           child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.chat_bubble_outline,
-              color: AppTheme.textSecondary, size: 48),
+          Icon(Icons.chat_bubble_outline,
+              color: AppTheme.textSubColor(isDark), size: 48),
           const SizedBox(height: 12),
           Text('Chưa có tin nhắn',
-              style: TextStyle(color: AppTheme.textSecondary)),
+              style: TextStyle(color: AppTheme.textSubColor(isDark))),
         ],
       ));
 }
@@ -592,6 +594,8 @@ class _AvatarWithFallback extends StatefulWidget {
 }
 
 class _AvatarWithFallbackState extends State<_AvatarWithFallback> {
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+
   bool _useFallback = false;
 
   @override
@@ -610,7 +614,7 @@ class _AvatarWithFallbackState extends State<_AvatarWithFallback> {
 
     return CircleAvatar(
       radius: widget.radius,
-      backgroundColor: AppTheme.darkSurface,
+      backgroundColor: AppTheme.surfaceColor(isDark),
       backgroundImage: url.isNotEmpty ? NetworkImage(url) : null,
       onBackgroundImageError:
           url.isNotEmpty && !_useFallback && widget.fallbackUrl.isNotEmpty

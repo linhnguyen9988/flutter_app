@@ -12,6 +12,8 @@ class LiveCommentsScreen extends StatefulWidget {
 }
 
 class _LiveCommentsScreenState extends State<LiveCommentsScreen> {
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+
   List<LiveComment> _comments = [];
   List<PageInfo> _pages = [];
   String? _selectedPageId;
@@ -86,15 +88,15 @@ class _LiveCommentsScreenState extends State<LiveCommentsScreen> {
                   decoration: InputDecoration(
                     hintText: 'Tìm kiếm bình luận...',
                     prefixIcon:
-                        const Icon(Icons.search, color: AppTheme.textSecondary),
+                        Icon(Icons.search, color: AppTheme.textSubColor(isDark)),
                     suffixIcon: _searchText.isNotEmpty
                         ? GestureDetector(
                             onTap: () {
                               _searchCtrl.clear();
                               setState(() => _searchText = '');
                             },
-                            child: const Icon(Icons.close,
-                                color: AppTheme.textSecondary, size: 18),
+                            child: Icon(Icons.close,
+                                color: AppTheme.textSubColor(isDark), size: 18),
                           )
                         : null,
                   ),
@@ -128,13 +130,13 @@ class _LiveCommentsScreenState extends State<LiveCommentsScreen> {
                       label: const Text('Có chốt đơn'),
                       selected: _filterOrders,
                       onSelected: (v) => setState(() => _filterOrders = v),
-                      backgroundColor: AppTheme.darkSurface,
+                      backgroundColor: AppTheme.surfaceColor(isDark),
                       selectedColor: AppTheme.primary.withValues(alpha: 0.3),
                       checkmarkColor: AppTheme.primary,
                       labelStyle: TextStyle(
                         color: _filterOrders
                             ? AppTheme.primary
-                            : AppTheme.textSecondary,
+                            : AppTheme.textSubColor(isDark),
                         fontSize: 12,
                       ),
                       side: BorderSide.none,
@@ -152,7 +154,7 @@ class _LiveCommentsScreenState extends State<LiveCommentsScreen> {
           : _filtered.isEmpty
               ? Center(
                   child: Text('Không có bình luận',
-                      style: TextStyle(color: AppTheme.textSecondary)))
+                      style: TextStyle(color: AppTheme.textSubColor(isDark))))
               : RefreshIndicator(
                   onRefresh: _loadComments,
                   color: AppTheme.primary,
@@ -160,7 +162,7 @@ class _LiveCommentsScreenState extends State<LiveCommentsScreen> {
                     itemCount: _filtered.length,
                     separatorBuilder: (_, __) => Divider(
                         height: 0,
-                        color: AppTheme.darkSurface.withValues(alpha: 0.5)),
+                        color: AppTheme.surfaceColor(isDark).withValues(alpha: 0.5)),
                     itemBuilder: (_, i) => _buildCommentTile(_filtered[i]),
                   ),
                 ),
@@ -175,11 +177,11 @@ class _LiveCommentsScreenState extends State<LiveCommentsScreen> {
         children: [
           CircleAvatar(
             radius: 20,
-            backgroundColor: AppTheme.darkSurface,
+            backgroundColor: AppTheme.surfaceColor(isDark),
             child: Text(
               (c.name ?? '?').substring(0, 1).toUpperCase(),
-              style: const TextStyle(
-                  color: Colors.white, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: AppTheme.textColor(isDark), fontWeight: FontWeight.bold),
             ),
           ),
           const SizedBox(width: 12),
@@ -191,8 +193,8 @@ class _LiveCommentsScreenState extends State<LiveCommentsScreen> {
                   children: [
                     Text(
                       c.name ?? 'Ẩn danh',
-                      style: const TextStyle(
-                        color: AppTheme.textPrimary,
+                      style: TextStyle(
+                        color: AppTheme.textColor(isDark),
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
                       ),
@@ -222,8 +224,8 @@ class _LiveCommentsScreenState extends State<LiveCommentsScreen> {
                 const SizedBox(height: 4),
                 Text(
                   c.message ?? '',
-                  style: const TextStyle(
-                      color: AppTheme.textSecondary, fontSize: 13),
+                  style: TextStyle(
+                      color: AppTheme.textSubColor(isDark), fontSize: 13),
                 ),
                 if (c.gia != null && c.gia!.isNotEmpty) ...[
                   const SizedBox(height: 4),
@@ -237,7 +239,7 @@ class _LiveCommentsScreenState extends State<LiveCommentsScreen> {
                 Text(
                   c.timecomment ?? '',
                   style: TextStyle(
-                      color: AppTheme.textSecondary.withValues(alpha: 0.6),
+                      color: AppTheme.textSubColor(isDark).withValues(alpha: 0.6),
                       fontSize: 11),
                 ),
               ],

@@ -19,6 +19,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with WidgetsBindingObserver, SingleTickerProviderStateMixin {
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+
   int _currentIndex = 0;
 
   final GlobalKey<ChotDonScreenState> _chotDonKey =
@@ -212,9 +214,9 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _buildBottomNav() {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.darkCard,
+        color: AppTheme.cardColor(isDark),
         border:
-            Border(top: BorderSide(color: AppTheme.darkSurface, width: 0.5)),
+            Border(top: BorderSide(color: AppTheme.surfaceColor(isDark), width: 0.5)),
       ),
       child: SafeArea(
         top: false,
@@ -290,7 +292,7 @@ class _HomeScreenState extends State<HomeScreen>
               children: [
                 Icon(
                   isSelected ? activeIcon : icon,
-                  color: isSelected ? AppTheme.primary : AppTheme.textSecondary,
+                  color: isSelected ? AppTheme.primary : AppTheme.textSubColor(isDark),
                   size: 24,
                 ),
                 if (showBadge)
@@ -304,7 +306,7 @@ class _HomeScreenState extends State<HomeScreen>
                         color: Colors.red,
                         borderRadius: BorderRadius.circular(10),
                         border:
-                            Border.all(color: AppTheme.darkCard, width: 1.5),
+                            Border.all(color: AppTheme.cardColor(isDark), width: 1.5),
                       ),
                       constraints:
                           const BoxConstraints(minWidth: 18, minHeight: 18),
@@ -326,7 +328,7 @@ class _HomeScreenState extends State<HomeScreen>
             Text(
               label,
               style: TextStyle(
-                color: isSelected ? AppTheme.primary : AppTheme.textSecondary,
+                color: isSelected ? AppTheme.primary : AppTheme.textSubColor(isDark),
                 fontSize: 10,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
               ),

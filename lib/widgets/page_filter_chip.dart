@@ -15,6 +15,7 @@ class PageFilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -22,13 +23,13 @@ class PageFilterChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 10),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: selected ? AppTheme.primary : AppTheme.darkSurface,
+          color: selected ? AppTheme.primary : AppTheme.surfaceColor(isDark),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: selected ? Colors.white : AppTheme.textSecondary,
+            color: selected ? Colors.white : AppTheme.textSubColor(isDark),
             fontSize: 12,
             fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
             height: 1.1,

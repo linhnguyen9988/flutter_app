@@ -24,6 +24,8 @@ class CustomersScreen extends StatefulWidget {
 }
 
 class CustomersScreenState extends State<CustomersScreen> {
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+
   List<Customer> _customers = [];
   List<PageInfo> _pages = [];
   String? _selectedPageId;
@@ -78,13 +80,13 @@ class CustomersScreenState extends State<CustomersScreen> {
             alignment: Alignment.centerLeft,
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
-              color: AppTheme.darkSurface,
+              color: AppTheme.surfaceColor(isDark),
               borderRadius: BorderRadius.circular(10),
             ),
             child: TextField(
               controller: _searchCtrl,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: AppTheme.textColor(isDark),
                 fontSize: 14,
                 height: 1.0,
               ),
@@ -96,10 +98,10 @@ class CustomersScreenState extends State<CustomersScreen> {
                 isDense: true,
                 hintText: 'Tên, sđt... (${_customers.length})',
                 hintStyle: TextStyle(
-                    color: AppTheme.textSecondary.withValues(alpha: 0.7),
+                    color: AppTheme.textSubColor(isDark).withValues(alpha: 0.7),
                     fontSize: 14),
-                prefixIcon: const Icon(Icons.search,
-                    color: AppTheme.textSecondary, size: 20),
+                prefixIcon: Icon(Icons.search,
+                    color: AppTheme.textSubColor(isDark), size: 20),
                 suffixIcon: _searchText.isNotEmpty
                     ? GestureDetector(
                         onTap: () {
@@ -107,8 +109,8 @@ class CustomersScreenState extends State<CustomersScreen> {
                           setState(() => _searchText = '');
                           _loadCustomers();
                         },
-                        child: const Icon(Icons.close,
-                            color: AppTheme.textSecondary, size: 18),
+                        child: Icon(Icons.close,
+                            color: AppTheme.textSubColor(isDark), size: 18),
                       )
                     : null,
                 border: InputBorder.none,
@@ -171,7 +173,7 @@ class CustomersScreenState extends State<CustomersScreen> {
           : _customers.isEmpty
               ? Center(
                   child: Text('Không có khách hàng',
-                      style: TextStyle(color: AppTheme.textSecondary)))
+                      style: TextStyle(color: AppTheme.textSubColor(isDark))))
               : RefreshIndicator(
                   onRefresh: _loadCustomers,
                   color: AppTheme.primary,
@@ -179,7 +181,7 @@ class CustomersScreenState extends State<CustomersScreen> {
                     itemCount: _customers.length,
                     separatorBuilder: (_, __) => Divider(
                         height: 0,
-                        color: AppTheme.darkSurface.withValues(alpha: 0.5)),
+                        color: AppTheme.surfaceColor(isDark).withValues(alpha: 0.5)),
                     itemBuilder: (_, i) => _buildCustomerTile(_customers[i]),
                   ),
                 ),
@@ -193,7 +195,7 @@ class CustomersScreenState extends State<CustomersScreen> {
         children: [
           CircleAvatar(
             radius: 24,
-            backgroundColor: AppTheme.darkSurface,
+            backgroundColor: AppTheme.surfaceColor(isDark),
             backgroundImage: c.userid != null && c.userid!.isNotEmpty
                 ? NetworkImage(
                     'https://aodaigiabao.com/images/ava/${c.userid}.jpg')
@@ -211,8 +213,8 @@ class CustomersScreenState extends State<CustomersScreen> {
       ),
       title: Text(
         c.displayName,
-        style: const TextStyle(
-            color: AppTheme.textPrimary, fontWeight: FontWeight.w600),
+        style: TextStyle(
+            color: AppTheme.textColor(isDark), fontWeight: FontWeight.w600),
       ),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -221,7 +223,7 @@ class CustomersScreenState extends State<CustomersScreen> {
             PhoneWidget(
               phone: c.phone!,
               style:
-                  const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                  TextStyle(color: AppTheme.textSubColor(isDark), fontSize: 12),
               prefix: const Text('📱', style: TextStyle(fontSize: 12)),
             ),
           if (c.label != null && c.label!.isNotEmpty)
@@ -233,7 +235,7 @@ class CustomersScreenState extends State<CustomersScreen> {
                 )),
         ],
       ),
-      trailing: const Icon(Icons.chevron_right, color: AppTheme.textSecondary),
+      trailing: Icon(Icons.chevron_right, color: AppTheme.textSubColor(isDark)),
       onTap: () {
         Navigator.push(
           context,

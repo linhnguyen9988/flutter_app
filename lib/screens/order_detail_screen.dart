@@ -17,6 +17,8 @@ class OrderDetailScreen extends StatefulWidget {
 
 class _OrderDetailScreenState extends State<OrderDetailScreen>
     with ReloadAwareMixin<OrderDetailScreen> {
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+
   late Order _order;
   bool _saving = false;
   bool _loadingOrder = false;
@@ -79,18 +81,18 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: AppTheme.darkCard,
-        title: const Text('Xác nhận hủy đơn',
-            style: TextStyle(color: Colors.white, fontSize: 16)),
+        backgroundColor: AppTheme.cardColor(isDark),
+        title: Text('Xác nhận hủy đơn',
+            style: TextStyle(color: AppTheme.textColor(isDark), fontSize: 16)),
         content: Text(
           'Hủy đơn ${_order.realorderid ?? _order.id.toString()}?\nThao tác này không thể hoàn tác.',
-          style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+          style: TextStyle(color: AppTheme.textSubColor(isDark), fontSize: 13),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Không',
-                style: TextStyle(color: AppTheme.textSecondary)),
+            child: Text('Không',
+                style: TextStyle(color: AppTheme.textSubColor(isDark))),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
@@ -189,13 +191,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                   )),
             ),
           if (_saving)
-            const Padding(
-              padding: EdgeInsets.all(14),
+            Padding(
+              padding: const EdgeInsets.all(14),
               child: SizedBox(
                   width: 20,
                   height: 20,
                   child: CircularProgressIndicator(
-                      strokeWidth: 2, color: Colors.white)),
+                      strokeWidth: 2, color: AppTheme.primary)),
             ),
         ],
       ),
@@ -306,12 +308,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                       width: double.infinity,
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: AppTheme.darkCard,
+                        color: AppTheme.cardColor(isDark),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(_lastNote,
-                          style: const TextStyle(
-                              color: AppTheme.textSecondary, fontSize: 13)),
+                          style: TextStyle(
+                              color: AppTheme.textSubColor(isDark), fontSize: 13)),
                     ),
                     const SizedBox(height: 20),
                   ],
@@ -362,21 +364,21 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
         padding: const EdgeInsets.only(bottom: 8),
         child: Text(t,
             style: TextStyle(
-                color: AppTheme.textSecondary,
+                color: AppTheme.textSubColor(isDark),
                 fontSize: 13,
                 fontWeight: FontWeight.w600)),
       );
 
   Widget _infoCard({required List<Widget> children}) => Container(
         decoration: BoxDecoration(
-            color: AppTheme.darkCard, borderRadius: BorderRadius.circular(12)),
+            color: AppTheme.cardColor(isDark), borderRadius: BorderRadius.circular(12)),
         child: Column(
             crossAxisAlignment: CrossAxisAlignment.start, children: children),
       );
 
   Widget _divider() => Divider(
       height: 0,
-      color: AppTheme.darkSurface.withValues(alpha: 0.5),
+      color: AppTheme.surfaceColor(isDark).withValues(alpha: 0.5),
       indent: 16,
       endIndent: 16);
 
@@ -391,12 +393,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
               width: 110,
               child: Text(label,
                   style:
-                      TextStyle(color: AppTheme.textSecondary, fontSize: 13))),
+                      TextStyle(color: AppTheme.textSubColor(isDark), fontSize: 13))),
           Expanded(
             child: Text(
               value,
               style: TextStyle(
-                color: valueColor ?? AppTheme.textPrimary,
+                color: valueColor ?? AppTheme.textColor(isDark),
                 fontSize: 13,
                 fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
               ),
@@ -405,8 +407,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
           if (copyable && value != '-')
             GestureDetector(
               onTap: () => _copyToClipboard(value),
-              child: const Icon(Icons.copy_outlined,
-                  color: AppTheme.textSecondary, size: 16),
+              child: Icon(Icons.copy_outlined,
+                  color: AppTheme.textSubColor(isDark), size: 16),
             ),
         ],
       ),

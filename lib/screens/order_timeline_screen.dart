@@ -23,6 +23,8 @@ class OrderTimelineScreen extends StatefulWidget {
 }
 
 class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+
   List<Map<String, dynamic>> _logs = [];
   bool _loading = true;
 
@@ -89,7 +91,7 @@ class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
             if (widget.order.realorderid != null)
               GestureDetector(
-                onDoubleTap: () {
+                onLongPress: () {
                   Clipboard.setData(
                       ClipboardData(text: widget.order.realorderid!));
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -100,7 +102,7 @@ class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
                 },
                 child: Text(widget.order.realorderid!,
                     style:
-                        TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                        TextStyle(fontSize: 12, color: AppTheme.textSubColor(isDark))),
               ),
           ],
         ),
@@ -120,11 +122,11 @@ class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
           : _logs.isEmpty
               ? Center(
                   child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(Icons.timeline,
-                        color: AppTheme.textSecondary, size: 48),
+                    Icon(Icons.timeline,
+                        color: AppTheme.textSubColor(isDark), size: 48),
                     const SizedBox(height: 12),
                     Text('Chưa có dữ liệu hành trình',
-                        style: TextStyle(color: AppTheme.textSecondary)),
+                        style: TextStyle(color: AppTheme.textSubColor(isDark))),
                   ]),
                 )
               : RefreshIndicator(
@@ -166,7 +168,7 @@ class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
                   Expanded(
                     child: Container(
                       width: 2,
-                      color: AppTheme.darkSurface,
+                      color: AppTheme.surfaceColor(isDark),
                     ),
                   )
                 else
@@ -175,7 +177,7 @@ class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
                   width: isFirst ? 14 : 10,
                   height: isFirst ? 14 : 10,
                   decoration: BoxDecoration(
-                    color: isFirst ? color : AppTheme.darkSurface,
+                    color: isFirst ? color : AppTheme.surfaceColor(isDark),
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: color,
@@ -193,7 +195,7 @@ class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
                 ),
                 if (!isLast)
                   Expanded(
-                    child: Container(width: 2, color: AppTheme.darkSurface),
+                    child: Container(width: 2, color: AppTheme.surfaceColor(isDark)),
                   )
                 else
                   const SizedBox(height: 8),
@@ -212,7 +214,7 @@ class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
                 decoration: BoxDecoration(
                   color: isFirst
                       ? color.withValues(alpha: 0.08)
-                      : AppTheme.darkCard,
+                      : AppTheme.cardColor(isDark),
                   borderRadius: BorderRadius.circular(12),
                   border: isFirst
                       ? Border.all(color: color.withValues(alpha: 0.3))
@@ -224,7 +226,7 @@ class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
                     Text(
                       statusName,
                       style: TextStyle(
-                        color: isFirst ? color : AppTheme.textPrimary,
+                        color: isFirst ? color : AppTheme.textColor(isDark),
                         fontWeight: isFirst ? FontWeight.w700 : FontWeight.w600,
                         fontSize: isFirst ? 15 : 14,
                       ),
@@ -233,17 +235,17 @@ class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
                     if (date.isNotEmpty)
                       Text(date,
                           style: TextStyle(
-                              color: AppTheme.textSecondary, fontSize: 12)),
+                              color: AppTheme.textSubColor(isDark), fontSize: 12)),
                     if (location.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Row(children: [
-                        const Icon(Icons.location_on_outlined,
-                            color: AppTheme.textSecondary, size: 13),
+                        Icon(Icons.location_on_outlined,
+                            color: AppTheme.textSubColor(isDark), size: 13),
                         const SizedBox(width: 4),
                         Expanded(
                             child: Text(location,
                                 style: TextStyle(
-                                    color: AppTheme.textSecondary,
+                                    color: AppTheme.textSubColor(isDark),
                                     fontSize: 12))),
                       ]),
                     ],
@@ -252,13 +254,13 @@ class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.person_outline,
-                              color: AppTheme.textSecondary, size: 13),
+                          Icon(Icons.person_outline,
+                              color: AppTheme.textSubColor(isDark), size: 13),
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(employee,
-                                style: const TextStyle(
-                                    color: AppTheme.textSecondary,
+                                style: TextStyle(
+                                    color: AppTheme.textSubColor(isDark),
                                     fontSize: 12),
                                 softWrap: true),
                           ),
@@ -282,7 +284,7 @@ class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
                       Text(note,
                           style: TextStyle(
                               color:
-                                  AppTheme.textSecondary.withValues(alpha: 0.7),
+                                  AppTheme.textSubColor(isDark).withValues(alpha: 0.7),
                               fontSize: 11)),
                     ],
                   ],

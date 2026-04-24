@@ -22,6 +22,8 @@ class ChotDonScreen extends StatefulWidget {
 
 class ChotDonScreenState extends State<ChotDonScreen>
     with SingleTickerProviderStateMixin {
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+
   late TabController _tabCtrl;
 
   List<Map<String, dynamic>> _livestreams = [];
@@ -392,7 +394,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
                 margin: const EdgeInsets.only(top: 4, bottom: 4),
                 clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
-                  color: Colors.white..withValues(alpha: 0.15),
+                  color: AppTheme.surfaceColor(isDark),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Center(
@@ -400,14 +402,14 @@ class ChotDonScreenState extends State<ChotDonScreen>
                     controller: _searchCtrl,
                     autofocus: true,
                     textAlignVertical: TextAlignVertical.center,
-                    style: const TextStyle(color: Colors.white, fontSize: 15),
+                    style: TextStyle(color: AppTheme.textColor(isDark), fontSize: 15),
                     decoration: InputDecoration(
                       isCollapsed: true,
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 8),
                       hintText: 'Tìm tên, SĐT, bình luận...',
                       hintStyle: TextStyle(
-                        color: Colors.white..withValues(alpha: 0.5),
+                        color: AppTheme.textSubColor(isDark),
                         fontSize: 14,
                       ),
                       suffixIcon: _searchText.isNotEmpty
@@ -416,8 +418,8 @@ class ChotDonScreenState extends State<ChotDonScreen>
                                 _searchCtrl.clear();
                                 setState(() => _searchText = '');
                               },
-                              child: const Icon(Icons.close,
-                                  color: AppTheme.textSecondary, size: 18),
+                              child: Icon(Icons.close,
+                                  color: AppTheme.textSubColor(isDark), size: 18),
                             )
                           : null,
                       border: InputBorder.none,
@@ -478,7 +480,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
           controller: _tabCtrl,
           indicatorColor: AppTheme.primary,
           labelColor: AppTheme.primary,
-          unselectedLabelColor: AppTheme.textSecondary,
+          unselectedLabelColor: AppTheme.textSubColor(isDark),
           tabs: const [
             Tab(text: 'Bình luận live'),
             Tab(text: 'Chốt đơn'),
@@ -541,7 +543,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
         constraints: const BoxConstraints(minWidth: 150, maxWidth: 280),
         padding: const EdgeInsets.symmetric(horizontal: 10),
         decoration: BoxDecoration(
-          color: AppTheme.darkSurface,
+          color: AppTheme.surfaceColor(isDark),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
@@ -561,8 +563,8 @@ class ChotDonScreenState extends State<ChotDonScreen>
                 label,
                 style: TextStyle(
                   color: _selectedLives.isEmpty
-                      ? AppTheme.textSecondary
-                      : Colors.white,
+                      ? AppTheme.textSubColor(isDark)
+                      : AppTheme.textColor(isDark),
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                 ),
@@ -571,8 +573,8 @@ class ChotDonScreenState extends State<ChotDonScreen>
               ),
             ),
             const SizedBox(width: 4),
-            const Icon(Icons.expand_more,
-                color: AppTheme.textSecondary, size: 16),
+            Icon(Icons.expand_more,
+                color: AppTheme.textSubColor(isDark), size: 16),
           ],
         ),
       ),
@@ -582,7 +584,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
   void _showLivePickerSheet() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppTheme.darkCard,
+      backgroundColor: AppTheme.cardColor(isDark),
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (_) => SafeArea(
@@ -594,7 +596,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                  color: AppTheme.darkSurface,
+                  color: AppTheme.surfaceColor(isDark),
                   borderRadius: BorderRadius.circular(2)),
             ),
             const SizedBox(height: 12),
@@ -613,7 +615,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
                   height: 8,
                   margin: const EdgeInsets.only(top: 4),
                   decoration: BoxDecoration(
-                    color: isLive ? Colors.red : AppTheme.textSecondary,
+                    color: isLive ? Colors.red : AppTheme.textSubColor(isDark),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -623,7 +625,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                             color:
-                                alreadyAdded ? AppTheme.primary : Colors.white,
+                                alreadyAdded ? AppTheme.primary : AppTheme.textColor(isDark),
                             fontSize: 13,
                             fontWeight: FontWeight.w600)),
                   ),
@@ -636,12 +638,12 @@ class ChotDonScreenState extends State<ChotDonScreen>
                   children: [
                     if (time.isNotEmpty)
                       Text(time,
-                          style: const TextStyle(
-                              color: AppTheme.textSecondary, fontSize: 11)),
-                    if (time.isNotEmpty && luotincuoi > 0)
-                      const Text(' · ',
                           style: TextStyle(
-                              color: AppTheme.textSecondary, fontSize: 11)),
+                              color: AppTheme.textSubColor(isDark), fontSize: 11)),
+                    if (time.isNotEmpty && luotincuoi > 0)
+                      Text(' · ',
+                          style: TextStyle(
+                              color: AppTheme.textSubColor(isDark), fontSize: 11)),
                     if (luotincuoi > 0)
                       Text('$luotincuoi chốt',
                           style: TextStyle(
@@ -653,8 +655,8 @@ class ChotDonScreenState extends State<ChotDonScreen>
                 trailing: alreadyAdded
                     ? const Icon(Icons.check_circle,
                         color: AppTheme.primary, size: 20)
-                    : const Icon(Icons.add_circle_outline,
-                        color: AppTheme.textSecondary, size: 20),
+                    : Icon(Icons.add_circle_outline,
+                        color: AppTheme.textSubColor(isDark), size: 20),
                 onTap: () {
                   _onSelectLive(live);
                   Navigator.pop(context);
@@ -687,7 +689,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
         controller: _commentScrollCtrl,
         itemCount: _filtered.length,
         separatorBuilder: (_, __) => Divider(
-            height: 0, color: AppTheme.darkSurface.withValues(alpha: 0.4)),
+            height: 0, color: AppTheme.surfaceColor(isDark).withValues(alpha: 0.4)),
         itemBuilder: (_, i) {
           final c = _filtered[i];
           return _buildCommentTile(c,
@@ -705,7 +707,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
       case 'Có vấn đề':
         return Colors.amber;
       default:
-        return AppTheme.textPrimary;
+        return AppTheme.textColor(isDark);
     }
   }
 
@@ -824,7 +826,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
                   const SizedBox(height: 3),
                   Text(c.message ?? '',
                       style: TextStyle(
-                          color: AppTheme.textSecondary, fontSize: 12),
+                          color: AppTheme.textSubColor(isDark), fontSize: 12),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis),
                   if (c.hasOrder) ...[
@@ -865,10 +867,10 @@ class ChotDonScreenState extends State<ChotDonScreen>
                 child: Container(
                   padding: const EdgeInsets.all(7),
                   decoration: BoxDecoration(
-                      color: AppTheme.darkSurface,
+                      color: AppTheme.surfaceColor(isDark),
                       borderRadius: BorderRadius.circular(8)),
-                  child: const Icon(Icons.format_list_bulleted,
-                      color: AppTheme.textSecondary, size: 18),
+                  child: Icon(Icons.format_list_bulleted,
+                      color: AppTheme.textSubColor(isDark), size: 18),
                 ),
               ),
             ]),
@@ -885,7 +887,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppTheme.darkCard,
+      backgroundColor: AppTheme.cardColor(isDark),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
@@ -902,7 +904,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                      color: AppTheme.darkSurface,
+                      color: AppTheme.surfaceColor(isDark),
                       borderRadius: BorderRadius.circular(2))),
               const SizedBox(height: 12),
               Row(children: [
@@ -962,11 +964,11 @@ class ChotDonScreenState extends State<ChotDonScreen>
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                      color: AppTheme.darkSurface,
+                      color: AppTheme.surfaceColor(isDark),
                       borderRadius: BorderRadius.circular(10)),
                   child: Text('${userComments.length} bình luận',
                       style: TextStyle(
-                          color: AppTheme.textSecondary, fontSize: 12)),
+                          color: AppTheme.textSubColor(isDark), fontSize: 12)),
                 ),
               ]),
             ]),
@@ -976,22 +978,22 @@ class ChotDonScreenState extends State<ChotDonScreen>
             child: userComments.isEmpty
                 ? Center(
                     child: Text('Không có bình luận',
-                        style: TextStyle(color: AppTheme.textSecondary)))
+                        style: TextStyle(color: AppTheme.textSubColor(isDark))))
                 : ListView.separated(
                     controller: ctrl,
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     itemCount: userComments.length,
                     separatorBuilder: (_, __) => Divider(
                         height: 0,
-                        color: AppTheme.darkSurface.withValues(alpha: 0.4)),
+                        color: AppTheme.surfaceColor(isDark).withValues(alpha: 0.4)),
                     itemBuilder: (_, i) {
                       final uc = userComments[i];
                       return ListTile(
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 4),
                         title: Text(uc.message ?? '',
-                            style: const TextStyle(
-                                color: AppTheme.textPrimary, fontSize: 13)),
+                            style: TextStyle(
+                                color: AppTheme.textColor(isDark), fontSize: 13)),
                         subtitle: uc.hasOrder
                             ? Padding(
                                 padding: const EdgeInsets.only(top: 4),
@@ -1131,15 +1133,14 @@ class ChotDonScreenState extends State<ChotDonScreen>
 
   String _formatMoneyK(int val) {
     if (val == 0) return '0';
-    if (val % 1000 == 0) return '${val ~/ 1000}k';
+    if (val % 1000 == 0) return '${val ~/ 1000}';
     final k = val / 1000;
     final str = k.toStringAsFixed(1).replaceAll(RegExp(r'\.0$'), '');
-    return '${str}k';
+    return str;
   }
 
   String _buildOrderMessage(LiveComment user, List<LiveComment> items,
       {bool includeShip = true}) {
-    final name = user.name ?? 'bạn';
     const pronoun = 'chị';
 
     final Map<int, int> priceQtyMap = {};
@@ -1157,13 +1158,13 @@ class ChotDonScreenState extends State<ChotDonScreen>
       final qty = priceQtyMap[price]!;
       final lineTotal = price * qty;
       lines.add(
-          '$qty vải giá ${_formatMoneyK(price)} = ${_formatMoneyK(lineTotal)}');
+          '$qty vải ${_formatMoneyK(price)} = ${_formatMoneyK(lineTotal)}');
     }
 
     const ship = 20000;
     final grandTotal = total + (includeShip ? ship : 0);
 
-    return 'Chào $pronoun $name, đơn hàng của $pronoun:\n'
+    return 'Đơn hàng của $pronoun:\n'
         '${lines.join("\n")}\n'
         '${includeShip ? "Phí ship 20k. " : ""}Tổng ${_formatMoneyK(grandTotal)}.\n'
         'Em ship hàng $pronoun nha!';
@@ -1191,7 +1192,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
 
     return Column(children: [
       Container(
-        color: AppTheme.darkCard,
+        color: AppTheme.cardColor(isDark),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(children: [
           _RetryAvatar(
@@ -1243,7 +1244,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
                   ),
               ])),
           IconButton(
-            icon: const Icon(Icons.close, color: AppTheme.textSecondary),
+            icon: Icon(Icons.close, color: AppTheme.textSubColor(isDark)),
             onPressed: () => setState(() {
               _selectedUser = null;
               _userComments = [];
@@ -1261,7 +1262,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
                 itemCount: items.length,
                 separatorBuilder: (_, __) => Divider(
                     height: 0,
-                    color: AppTheme.darkSurface.withValues(alpha: 0.4)),
+                    color: AppTheme.surfaceColor(isDark).withValues(alpha: 0.4)),
                 itemBuilder: (_, i) {
                   if (i >= items.length) return const SizedBox.shrink();
                   final c = items[i];
@@ -1272,8 +1273,8 @@ class ChotDonScreenState extends State<ChotDonScreen>
                     contentPadding:
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                     title: Text(c.message ?? '',
-                        style: const TextStyle(
-                            color: AppTheme.textSecondary, fontSize: 12)),
+                        style: TextStyle(
+                            color: AppTheme.textSubColor(isDark), fontSize: 12)),
                     subtitle: Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Wrap(
@@ -1329,11 +1330,11 @@ class ChotDonScreenState extends State<ChotDonScreen>
       ),
       Container(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-        color: AppTheme.darkCard,
+        color: AppTheme.cardColor(isDark),
         child: Column(children: [
           Row(children: [
             Text('Hàng:',
-                style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                style: TextStyle(color: AppTheme.textSubColor(isDark), fontSize: 13)),
             const SizedBox(width: 6),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -1349,12 +1350,12 @@ class ChotDonScreenState extends State<ChotDonScreen>
             ),
             const Spacer(),
             Text(_formatMoney(subtotal),
-                style: const TextStyle(color: Colors.white, fontSize: 13)),
+                style: TextStyle(color: AppTheme.textColor(isDark), fontSize: 13)),
           ]),
           const SizedBox(height: 4),
           Row(children: [
             Text('Ship:',
-                style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                style: TextStyle(color: AppTheme.textSubColor(isDark), fontSize: 13)),
             const SizedBox(width: 8),
             GestureDetector(
               onTap: () => setState(() => _includeShip = !_includeShip),
@@ -1365,12 +1366,12 @@ class ChotDonScreenState extends State<ChotDonScreen>
                 decoration: BoxDecoration(
                   color: _includeShip
                       ? AppTheme.accent.withValues(alpha: 0.15)
-                      : AppTheme.darkSurface,
+                      : AppTheme.surfaceColor(isDark),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: _includeShip
                         ? AppTheme.accent.withValues(alpha: 0.5)
-                        : AppTheme.darkSurface,
+                        : AppTheme.surfaceColor(isDark),
                   ),
                 ),
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -1380,7 +1381,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
                         : Icons.remove_circle_outline,
                     size: 13,
                     color:
-                        _includeShip ? AppTheme.accent : AppTheme.textSecondary,
+                        _includeShip ? AppTheme.accent : AppTheme.textSubColor(isDark),
                   ),
                   const SizedBox(width: 4),
                   Text(
@@ -1388,7 +1389,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
                     style: TextStyle(
                       color: _includeShip
                           ? AppTheme.accent
-                          : AppTheme.textSecondary,
+                          : AppTheme.textSubColor(isDark),
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
@@ -1400,9 +1401,9 @@ class ChotDonScreenState extends State<ChotDonScreen>
           ]),
           const SizedBox(height: 4),
           Row(children: [
-            const Text('Tổng:',
+            Text('Tổng:',
                 style: TextStyle(
-                    color: Colors.white,
+                    color: AppTheme.textColor(isDark),
                     fontWeight: FontWeight.w700,
                     fontSize: 15)),
             const Spacer(),
@@ -1460,7 +1461,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppTheme.darkCard,
+      backgroundColor: AppTheme.cardColor(isDark),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
@@ -1480,7 +1481,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                        color: AppTheme.darkSurface,
+                        color: AppTheme.surfaceColor(isDark),
                         borderRadius: BorderRadius.circular(2)))),
             const SizedBox(height: 16),
             Row(children: [
@@ -1497,8 +1498,8 @@ class ChotDonScreenState extends State<ChotDonScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                     Text(c.name ?? '',
-                        style: const TextStyle(
-                            color: Colors.white,
+                        style: TextStyle(
+                            color: AppTheme.textColor(isDark),
                             fontWeight: FontWeight.w700,
                             fontSize: 16)),
                     if (c.customerPhone != null && c.customerPhone!.isNotEmpty)
@@ -1529,7 +1530,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
             ]),
             const SizedBox(height: 8),
             Text(c.message ?? '',
-                style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                style: TextStyle(color: AppTheme.textSubColor(isDark), fontSize: 13)),
             if (c.chot != null && c.chot!.isNotEmpty) ...[
               const SizedBox(height: 8),
               Row(children: [
@@ -1551,16 +1552,16 @@ class ChotDonScreenState extends State<ChotDonScreen>
                 child: TextField(
                   controller: giaCtrl,
                   keyboardType: TextInputType.number,
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                  style: TextStyle(color: AppTheme.textColor(isDark), fontSize: 14),
                   decoration: InputDecoration(
                     hintText: 'Giá (VD: 35000)',
                     hintStyle: TextStyle(
-                        color: AppTheme.textSecondary.withValues(alpha: 0.6),
+                        color: AppTheme.textSubColor(isDark).withValues(alpha: 0.6),
                         fontSize: 12),
-                    prefixIcon: const Icon(Icons.payments_outlined,
-                        color: AppTheme.textSecondary, size: 16),
+                    prefixIcon: Icon(Icons.payments_outlined,
+                        color: AppTheme.textSubColor(isDark), size: 16),
                     filled: true,
-                    fillColor: AppTheme.darkSurface,
+                    fillColor: AppTheme.surfaceColor(isDark),
                     isDense: true,
                     contentPadding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 10),
@@ -1576,15 +1577,15 @@ class ChotDonScreenState extends State<ChotDonScreen>
                 child: TextField(
                   controller: slCtrl,
                   keyboardType: TextInputType.number,
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                  style: TextStyle(color: AppTheme.textColor(isDark), fontSize: 14),
                   textAlign: TextAlign.center,
                   decoration: InputDecoration(
                     hintText: 'SL',
                     hintStyle: TextStyle(
-                        color: AppTheme.textSecondary.withValues(alpha: 0.6),
+                        color: AppTheme.textSubColor(isDark).withValues(alpha: 0.6),
                         fontSize: 12),
                     filled: true,
-                    fillColor: AppTheme.darkSurface,
+                    fillColor: AppTheme.surfaceColor(isDark),
                     isDense: true,
                     contentPadding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
@@ -1636,8 +1637,8 @@ class ChotDonScreenState extends State<ChotDonScreen>
                   icon: const Icon(Icons.print_outlined, size: 15),
                   label: const Text('In', style: TextStyle(fontSize: 13)),
                   style: OutlinedButton.styleFrom(
-                      foregroundColor: AppTheme.textSecondary,
-                      side: BorderSide(color: AppTheme.darkSurface),
+                      foregroundColor: AppTheme.textSubColor(isDark),
+                      side: BorderSide(color: AppTheme.surfaceColor(isDark)),
                       padding: const EdgeInsets.symmetric(vertical: 10)),
                   onPressed: () {
                     Navigator.pop(context);
@@ -1909,10 +1910,10 @@ class ChotDonScreenState extends State<ChotDonScreen>
 
   Widget _buildEmpty(String msg) => Center(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(Icons.inbox_outlined, color: AppTheme.textSecondary, size: 48),
+          Icon(Icons.inbox_outlined, color: AppTheme.textSubColor(isDark), size: 48),
           const SizedBox(height: 12),
           Text(msg,
-              style: TextStyle(color: AppTheme.textSecondary),
+              style: TextStyle(color: AppTheme.textSubColor(isDark)),
               textAlign: TextAlign.center),
         ]),
       );
@@ -1937,6 +1938,8 @@ class _LiveBadge extends StatefulWidget {
 
 class _LiveBadgeState extends State<_LiveBadge>
     with SingleTickerProviderStateMixin {
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+
   late AnimationController _ctrl;
   late Animation<double> _anim;
 
@@ -1991,6 +1994,8 @@ class _RetryAvatar extends StatefulWidget {
 }
 
 class _RetryAvatarState extends State<_RetryAvatar> {
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+
   String? _baseUrl;
   String? _url;
   int _retryCount = 0;
@@ -2043,10 +2048,10 @@ class _RetryAvatarState extends State<_RetryAvatar> {
     if (_url == null) {
       return CircleAvatar(
         radius: widget.radius,
-        backgroundColor: AppTheme.darkSurface,
+        backgroundColor: AppTheme.surfaceColor(isDark),
         child: Text(initial,
             style: TextStyle(
-                color: Colors.white,
+                color: AppTheme.textColor(isDark),
                 fontWeight: FontWeight.bold,
                 fontSize: widget.fontSize)),
       );
@@ -2067,11 +2072,11 @@ class _RetryAvatarState extends State<_RetryAvatar> {
             return Container(
               width: diameter,
               height: diameter,
-              color: AppTheme.darkSurface,
+              color: AppTheme.surfaceColor(isDark),
               alignment: Alignment.center,
               child: Text(initial,
                   style: TextStyle(
-                      color: Colors.white,
+                      color: AppTheme.textColor(isDark),
                       fontWeight: FontWeight.bold,
                       fontSize: widget.fontSize)),
             );
@@ -2092,6 +2097,8 @@ class KeepAliveWrapper extends StatefulWidget {
 
 class _KeepAliveWrapperState extends State<KeepAliveWrapper>
     with AutomaticKeepAliveClientMixin {
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+
   @override
   bool get wantKeepAlive => true;
 

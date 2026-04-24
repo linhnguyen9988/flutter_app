@@ -18,6 +18,8 @@ class NotificationScreen extends StatefulWidget {
 
 class _NotificationScreenState extends State<NotificationScreen>
     with ReloadAwareMixin<NotificationScreen> {
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+
   List<Map<String, dynamic>> _notis = [];
   bool _loading = true;
   String? _error;
@@ -209,15 +211,15 @@ class _NotificationScreenState extends State<NotificationScreen>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.wifi_off,
-                        color: AppTheme.textSecondary,
+                        color: AppTheme.textSubColor(isDark),
                         size: 48,
                       ),
                       const SizedBox(height: 12),
                       Text(
                         _error!,
-                        style: const TextStyle(color: AppTheme.textSecondary),
+                        style: TextStyle(color: AppTheme.textSubColor(isDark)),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton.icon(
@@ -236,15 +238,15 @@ class _NotificationScreenState extends State<NotificationScreen>
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.notifications_none,
-                            color: AppTheme.textSecondary,
+                            color: AppTheme.textSubColor(isDark),
                             size: 48,
                           ),
                           const SizedBox(height: 12),
-                          const Text(
+                          Text(
                             'Chưa có thông báo',
-                            style: TextStyle(color: AppTheme.textSecondary),
+                            style: TextStyle(color: AppTheme.textSubColor(isDark)),
                           ),
                           const SizedBox(height: 16),
                           TextButton.icon(
@@ -262,7 +264,7 @@ class _NotificationScreenState extends State<NotificationScreen>
                         itemCount: _notis.length,
                         separatorBuilder: (_, __) => Divider(
                           height: 0,
-                          color: AppTheme.darkSurface.withValues(alpha: 0.5),
+                          color: AppTheme.surfaceColor(isDark).withValues(alpha: 0.5),
                         ),
                         itemBuilder: (_, i) {
                           final n = _notis[i];
@@ -285,24 +287,24 @@ class _NotificationScreenState extends State<NotificationScreen>
                               return await showDialog<bool>(
                                     context: context,
                                     builder: (ctx) => AlertDialog(
-                                      backgroundColor: AppTheme.darkCard,
-                                      title: const Text(
+                                      backgroundColor: AppTheme.cardColor(isDark),
+                                      title: Text(
                                         'Xóa thông báo',
-                                        style: TextStyle(color: Colors.white),
+                                        style: TextStyle(color: AppTheme.textColor(isDark)),
                                       ),
-                                      content: const Text(
+                                      content: Text(
                                         'Bạn có chắc muốn xóa thông báo này?',
                                         style: TextStyle(
-                                            color: AppTheme.textSecondary),
+                                            color: AppTheme.textSubColor(isDark)),
                                       ),
                                       actions: [
                                         TextButton(
                                           onPressed: () =>
                                               Navigator.pop(ctx, false),
-                                          child: const Text(
+                                          child: Text(
                                             'Hủy',
                                             style: TextStyle(
-                                              color: AppTheme.textSecondary,
+                                              color: AppTheme.textSubColor(isDark),
                                             ),
                                           ),
                                         ),
@@ -375,8 +377,8 @@ class _NotificationScreenState extends State<NotificationScreen>
                                                   title,
                                                   style: TextStyle(
                                                     color: read
-                                                        ? AppTheme.textPrimary
-                                                        : Colors.white,
+                                                        ? AppTheme.textColor(isDark)
+                                                        : AppTheme.textColor(isDark),
                                                     fontWeight: read
                                                         ? FontWeight.w500
                                                         : FontWeight.w700,
@@ -403,8 +405,8 @@ class _NotificationScreenState extends State<NotificationScreen>
                                             const SizedBox(height: 2),
                                             Text(
                                               body,
-                                              style: const TextStyle(
-                                                color: AppTheme.textSecondary,
+                                              style: TextStyle(
+                                                color: AppTheme.textSubColor(isDark),
                                                 fontSize: 12,
                                               ),
                                               maxLines: 2,
@@ -427,7 +429,7 @@ class _NotificationScreenState extends State<NotificationScreen>
                                             Text(
                                               time,
                                               style: TextStyle(
-                                                color: AppTheme.textSecondary
+                                                color: AppTheme.textSubColor(isDark)
                                                     .withValues(alpha: 0.6),
                                                 fontSize: 11,
                                               ),

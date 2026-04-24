@@ -16,9 +16,10 @@ class PhoneWidget extends StatelessWidget {
   });
 
   void _show(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppTheme.darkCard,
+      backgroundColor: AppTheme.cardColor(isDark),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -31,14 +32,14 @@ class PhoneWidget extends StatelessWidget {
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: AppTheme.darkSurface,
+                color: AppTheme.surfaceColor(isDark),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
             const SizedBox(height: 16),
             Text(phone,
-                style: const TextStyle(
-                    color: Colors.white,
+                style: TextStyle(
+                    color: AppTheme.textColor(isDark),
                     fontSize: 22,
                     fontWeight: FontWeight.w700)),
             const SizedBox(height: 20),
@@ -72,8 +73,8 @@ class PhoneWidget extends StatelessWidget {
                       icon: const Icon(Icons.copy, size: 18),
                       label: const Text('Sao chép'),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppTheme.textPrimary,
-                        side: const BorderSide(color: AppTheme.darkSurface),
+                        foregroundColor: AppTheme.textColor(isDark),
+                        side: BorderSide(color: AppTheme.surfaceColor(isDark)),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
@@ -100,6 +101,7 @@ class PhoneWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final defaultStyle = TextStyle(
       color: AppTheme.primary,
       fontSize: 13,

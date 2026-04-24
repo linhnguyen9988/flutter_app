@@ -7,7 +7,7 @@ import '../models/live_comment.dart';
 import '../models/order.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://aodaigiabao.com:3000/api';
+  static const String baseUrl = 'https://aodaigiabao.com/api';
 
   static String _token = '';
   static void setToken(String token) => _token = token;

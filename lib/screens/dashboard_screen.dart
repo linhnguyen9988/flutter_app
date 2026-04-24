@@ -14,6 +14,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+
   int _currentIndex = 0;
 
   // 4 tabs thực (QR giữa là nút nổi, không phải tab)
@@ -77,7 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildBottomNav() {
     return BottomAppBar(
-      color: AppTheme.darkCard,
+      color: AppTheme.cardColor(isDark),
       shape: const CircularNotchedRectangle(),
       notchMargin: 8,
       elevation: 0,
@@ -115,14 +117,14 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Icon(
               isSelected ? activeIcon : icon,
-              color: isSelected ? AppTheme.primary : AppTheme.textSecondary,
+              color: isSelected ? AppTheme.primary : AppTheme.textSubColor(isDark),
               size: 24,
             ),
             const SizedBox(height: 2),
             Text(
               label,
               style: TextStyle(
-                color: isSelected ? AppTheme.primary : AppTheme.textSecondary,
+                color: isSelected ? AppTheme.primary : AppTheme.textSubColor(isDark),
                 fontSize: 10,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
               ),

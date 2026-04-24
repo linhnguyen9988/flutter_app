@@ -12,7 +12,7 @@ class Order {
   final String? orderid;
   final String? realorderid;
   final int? khid;
-  final int? statuscode;
+  int? statuscode;
   final String? statustext;
   final String? realfbid;
   final String? userid;

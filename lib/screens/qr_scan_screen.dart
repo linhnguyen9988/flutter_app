@@ -20,6 +20,8 @@ class QrScanScreen extends StatefulWidget {
 
 class _QrScanScreenState extends State<QrScanScreen>
     with SingleTickerProviderStateMixin {
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+
   bool _scanned = false;
   _ScanMode _mode = _ScanMode.chotDon;
   late AnimationController _scanAnim;
@@ -215,11 +217,11 @@ class _QrScanScreenState extends State<QrScanScreen>
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: AppTheme.darkCard,
+        backgroundColor: AppTheme.cardColor(isDark),
         title:
             const Text('Không tìm thấy', style: TextStyle(color: Colors.white)),
         content:
-            Text(msg, style: const TextStyle(color: AppTheme.textSecondary)),
+            Text(msg, style: TextStyle(color: AppTheme.textSubColor(isDark))),
         actions: [
           TextButton(
             onPressed: () {
@@ -235,8 +237,8 @@ class _QrScanScreenState extends State<QrScanScreen>
               Navigator.pop(context);
               Navigator.pop(context);
             },
-            child: const Text('Đóng',
-                style: TextStyle(color: AppTheme.textSecondary)),
+            child: Text('Đóng',
+                style: TextStyle(color: AppTheme.textSubColor(isDark))),
           ),
         ],
       ),
@@ -248,7 +250,7 @@ class _QrScanScreenState extends State<QrScanScreen>
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: AppTheme.darkCard,
+        backgroundColor: AppTheme.cardColor(isDark),
         title: const Text('Nhập mã', style: TextStyle(color: Colors.white)),
         content: TextField(
           controller: ctrl,
@@ -257,7 +259,7 @@ class _QrScanScreenState extends State<QrScanScreen>
           keyboardType: TextInputType.text,
           decoration: InputDecoration(
             hintText: 'ID khách / Mã vận đơn...',
-            hintStyle: TextStyle(color: AppTheme.textSecondary),
+            hintStyle: TextStyle(color: AppTheme.textSubColor(isDark)),
           ),
           onSubmitted: (v) {
             if (v.trim().isNotEmpty) {
@@ -269,8 +271,8 @@ class _QrScanScreenState extends State<QrScanScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Hủy',
-                style: TextStyle(color: AppTheme.textSecondary)),
+            child: Text('Hủy',
+                style: TextStyle(color: AppTheme.textSubColor(isDark))),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),

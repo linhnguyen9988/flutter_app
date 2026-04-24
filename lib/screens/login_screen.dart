@@ -15,6 +15,8 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+
   final _userCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   bool _obscure = true;
@@ -135,7 +137,7 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBg,
+      backgroundColor: AppTheme.bgColor(isDark),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -177,7 +179,7 @@ class _LoginScreenState extends State<LoginScreen>
                           const Text(
                             'Áo Dài Gia Bảo',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: Color(0xFF1877F2),
                               fontSize: 28,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 0.8,
@@ -187,7 +189,7 @@ class _LoginScreenState extends State<LoginScreen>
                           Text(
                             'Hệ thống quản lý bán hàng',
                             style: TextStyle(
-                                color: AppTheme.textSecondary,
+                                color: AppTheme.textSubColor(isDark),
                                 fontSize: 14,
                                 letterSpacing: 0.3),
                           ),
@@ -201,7 +203,7 @@ class _LoginScreenState extends State<LoginScreen>
                       controller: _userCtrl,
                       keyboardType: TextInputType.text,
                       textInputAction: TextInputAction.next,
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: AppTheme.textColor(isDark)),
                       decoration: _inputDecoration(
                         hint: 'Nhập username...',
                         icon: Icons.person_outline,
@@ -215,7 +217,7 @@ class _LoginScreenState extends State<LoginScreen>
                       obscureText: _obscure,
                       textInputAction: TextInputAction.done,
                       onSubmitted: (_) => _login(),
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: AppTheme.textColor(isDark)),
                       decoration: _inputDecoration(
                         hint: 'Nhập mật khẩu...',
                         icon: Icons.lock_outline,
@@ -224,7 +226,7 @@ class _LoginScreenState extends State<LoginScreen>
                             _obscure
                                 ? Icons.visibility_outlined
                                 : Icons.visibility_off_outlined,
-                            color: AppTheme.textSecondary,
+                            color: AppTheme.textSubColor(isDark),
                             size: 20,
                           ),
                           onPressed: () => setState(() => _obscure = !_obscure),
@@ -311,7 +313,7 @@ class _LoginScreenState extends State<LoginScreen>
                           const SizedBox(height: 6),
                           Text('Đăng nhập sinh trắc học',
                               style: TextStyle(
-                                  color: AppTheme.textSecondary, fontSize: 12)),
+                                  color: AppTheme.textSubColor(isDark), fontSize: 12)),
                         ]),
                       ),
                     ],
@@ -321,7 +323,7 @@ class _LoginScreenState extends State<LoginScreen>
                         'ADGB Version 1.0.0',
                         style: TextStyle(
                             color:
-                                AppTheme.textSecondary.withValues(alpha: 0.4),
+                                AppTheme.textSubColor(isDark).withValues(alpha: 0.4),
                             fontSize: 12),
                       ),
                     ),
@@ -340,7 +342,7 @@ class _LoginScreenState extends State<LoginScreen>
         child: Text(
           text,
           style: TextStyle(
-              color: AppTheme.textSecondary,
+              color: AppTheme.textSubColor(isDark),
               fontSize: 13,
               fontWeight: FontWeight.w600),
         ),
@@ -354,11 +356,11 @@ class _LoginScreenState extends State<LoginScreen>
       InputDecoration(
         hintText: hint,
         hintStyle:
-            TextStyle(color: AppTheme.textSecondary.withValues(alpha: 0.5)),
-        prefixIcon: Icon(icon, color: AppTheme.textSecondary, size: 20),
+            TextStyle(color: AppTheme.textSubColor(isDark).withValues(alpha: 0.5)),
+        prefixIcon: Icon(icon, color: AppTheme.textSubColor(isDark), size: 20),
         suffixIcon: suffix,
         filled: true,
-        fillColor: AppTheme.darkCard,
+        fillColor: AppTheme.cardColor(isDark),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,

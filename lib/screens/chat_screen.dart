@@ -39,6 +39,8 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+
   List<Message> _messages = [];
   Customer? _customer;
   Order? _latestOrder;
@@ -88,7 +90,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Color get _latestOrderColor => _latestOrder != null
       ? Order.statusColor(_latestOrder!.statuscode)
-      : AppTheme.textSecondary;
+      : AppTheme.textSubColor(isDark);
 
   @override
   void initState() {
@@ -513,43 +515,26 @@ class _ChatScreenState extends State<ChatScreen> {
                   ? const Center(
                       child: CircularProgressIndicator(color: AppTheme.primary))
                   : _messages.isEmpty
-                      ? const Center(
+                      ? Center(
                           child: Text('Chưa có tin nhắn',
-                              style: TextStyle(color: AppTheme.textSecondary)))
-                      : Listener(
-                          onPointerUp: (_) {
-                            if (!_scrollCtrl.hasClients) return;
-                            if (_scrollCtrl.position.pixels <= 60) {
-                              _loadMore();
-                            }
-                          },
-                          child: NotificationListener<ScrollUpdateNotification>(
-                            onNotification: (n) {
-                              return false;
-                            },
-                            child: ListView.builder(
-                              controller: _scrollCtrl,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
-                              itemCount:
-                                  _messages.length + (_loadingMore ? 1 : 0),
-                              itemBuilder: (_, i) {
-                                if (i == 0 && _loadingMore) {
-                                  return const Padding(
-                                    padding: EdgeInsets.all(8),
-                                    child: Center(
-                                        child: SizedBox(
-                                            width: 20,
-                                            height: 20,
-                                            child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                color: AppTheme.primary))),
-                                  );
+                              style: TextStyle(
+                                  color: AppTheme.textSubColor(isDark))))
+                      : RefreshIndicator(
+                          color: AppTheme.primary,
+                          onRefresh: _hasMore
+                              ? () async {
+                                  await _loadMore();
                                 }
-                                final msgIdx = _loadingMore ? i - 1 : i;
-                                return _buildBubble(_messages[msgIdx]);
-                              },
-                            ),
+                              : () async {},
+                          child: ListView.builder(
+                            controller: _scrollCtrl,
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                            itemCount: _messages.length,
+                            itemBuilder: (_, i) {
+                              return _buildBubble(_messages[i]);
+                            },
                           ),
                         ),
             ),
@@ -627,10 +612,11 @@ class _ChatScreenState extends State<ChatScreen> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 4, vertical: 1),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.darkCard,
+                                  color: AppTheme.cardColor(isDark),
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                      color: AppTheme.darkSurface, width: 1.5),
+                                      color: AppTheme.surfaceColor(isDark),
+                                      width: 1.5),
                                 ),
                                 child: Text(reaction,
                                     style: const TextStyle(fontSize: 12)),
@@ -661,7 +647,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               horizontal: 14, vertical: 10),
                           decoration: BoxDecoration(
                             color: isIncoming
-                                ? AppTheme.darkSurface
+                                ? AppTheme.surfaceColor(isDark)
                                 : AppTheme.primary,
                             borderRadius: BorderRadius.only(
                               topLeft: const Radius.circular(18),
@@ -671,8 +657,11 @@ class _ChatScreenState extends State<ChatScreen> {
                             ),
                           ),
                           child: Text(msg.message!,
-                              style: const TextStyle(
-                                  color: Colors.white, fontSize: 14)),
+                              style: TextStyle(
+                                  color: isIncoming
+                                      ? AppTheme.textColor(isDark)
+                                      : Colors.white,
+                                  fontSize: 14)),
                         ),
                       ),
                       if (reaction != null)
@@ -683,10 +672,11 @@ class _ChatScreenState extends State<ChatScreen> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 4, vertical: 1),
                             decoration: BoxDecoration(
-                              color: AppTheme.darkCard,
+                              color: AppTheme.cardColor(isDark),
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                  color: AppTheme.darkSurface, width: 1.5),
+                                  color: AppTheme.surfaceColor(isDark),
+                                  width: 1.5),
                             ),
                             child: Text(reaction,
                                 style: const TextStyle(fontSize: 12)),
@@ -699,12 +689,12 @@ class _ChatScreenState extends State<ChatScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (!isIncoming && msg.isPending) ...[
-                      const SizedBox(
+                      SizedBox(
                         width: 10,
                         height: 10,
                         child: CircularProgressIndicator(
                           strokeWidth: 1.5,
-                          color: AppTheme.textSecondary,
+                          color: AppTheme.textSubColor(isDark),
                         ),
                       ),
                       const SizedBox(width: 3),
@@ -719,13 +709,13 @@ class _ChatScreenState extends State<ChatScreen> {
                       const SizedBox(width: 3),
                     ],
                     Text(_formatTime(msg.dateTime),
-                        style: const TextStyle(
-                            color: AppTheme.textSecondary, fontSize: 8)),
+                        style: TextStyle(
+                            color: AppTheme.textSubColor(isDark), fontSize: 8)),
                     if (isRead) ...[
                       const SizedBox(width: 3),
                       CircleAvatar(
                         radius: 4,
-                        backgroundColor: AppTheme.darkSurface,
+                        backgroundColor: AppTheme.surfaceColor(isDark),
                         backgroundImage: NetworkImage(_avatarUrl),
                         onBackgroundImageError: (_, __) {},
                       ),
@@ -754,7 +744,7 @@ class _ChatScreenState extends State<ChatScreen> {
             return Container(
                 width: 200,
                 height: 120,
-                color: AppTheme.darkSurface,
+                color: AppTheme.surfaceColor(isDark),
                 child: const Center(
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: AppTheme.primary)));
@@ -762,9 +752,10 @@ class _ChatScreenState extends State<ChatScreen> {
           errorBuilder: (_, __, ___) => Container(
             width: 200,
             height: 80,
-            color: AppTheme.darkSurface,
-            child: const Center(
-                child: Icon(Icons.broken_image, color: AppTheme.textSecondary)),
+            color: AppTheme.surfaceColor(isDark),
+            child: Center(
+                child: Icon(Icons.broken_image,
+                    color: AppTheme.textSubColor(isDark))),
           ),
         ),
       ),
@@ -773,7 +764,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _buildImagePreview() {
     return Container(
-      color: AppTheme.darkCard,
+      color: AppTheme.cardColor(isDark),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
         children: [
@@ -785,11 +776,11 @@ class _ChatScreenState extends State<ChatScreen> {
           const SizedBox(width: 10),
           Expanded(
               child: Text('Ảnh đã chọn',
-                  style:
-                      TextStyle(color: AppTheme.textSecondary, fontSize: 13))),
+                  style: TextStyle(
+                      color: AppTheme.textSubColor(isDark), fontSize: 13))),
           IconButton(
-            icon: const Icon(Icons.close,
-                color: AppTheme.textSecondary, size: 20),
+            icon: Icon(Icons.close,
+                color: AppTheme.textSubColor(isDark), size: 20),
             onPressed: () => setState(() => _pickedImage = null),
           ),
         ],
@@ -799,7 +790,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _buildReplyBar() {
     return Container(
-      color: AppTheme.darkCard,
+      color: AppTheme.cardColor(isDark),
       padding: EdgeInsets.only(
         left: 8,
         right: 8,
@@ -810,18 +801,18 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           GestureDetector(
             onTap: _pickFromCamera,
-            child: const Padding(
+            child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 6, vertical: 8),
               child: Icon(Icons.camera_alt_outlined,
-                  color: AppTheme.textSecondary, size: 22),
+                  color: AppTheme.textSubColor(isDark), size: 22),
             ),
           ),
           GestureDetector(
             onTap: _pickFromGallery,
-            child: const Padding(
+            child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 6, vertical: 8),
               child: Icon(Icons.photo_library_outlined,
-                  color: AppTheme.textSecondary, size: 22),
+                  color: AppTheme.textSubColor(isDark), size: 22),
             ),
           ),
           const SizedBox(width: 6),
@@ -848,7 +839,8 @@ class _ChatScreenState extends State<ChatScreen> {
                         color:
                             (_replyCtrl.text.isNotEmpty || _pickedImage != null)
                                 ? AppTheme.primary
-                                : AppTheme.textSecondary.withValues(alpha: 0.3),
+                                : AppTheme.textSubColor(isDark)
+                                    .withValues(alpha: 0.3),
                       ),
                       child: const Icon(
                         Icons.arrow_upward_rounded,
@@ -904,6 +896,8 @@ class _AvatarWithFallback extends StatefulWidget {
 }
 
 class _AvatarWithFallbackState extends State<_AvatarWithFallback> {
+  bool get isDark => Theme.of(context).brightness == Brightness.dark;
+
   bool _useFallback = false;
 
   @override
@@ -922,7 +916,7 @@ class _AvatarWithFallbackState extends State<_AvatarWithFallback> {
 
     return CircleAvatar(
       radius: widget.radius,
-      backgroundColor: AppTheme.darkSurface,
+      backgroundColor: AppTheme.surfaceColor(isDark),
       backgroundImage: url.isNotEmpty ? NetworkImage(url) : null,
       onBackgroundImageError:
           url.isNotEmpty && !_useFallback && widget.fallbackUrl.isNotEmpty
