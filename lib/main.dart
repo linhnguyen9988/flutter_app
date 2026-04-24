@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
@@ -34,14 +35,37 @@ Future<void> main() async {
   );
 }
 
-/// Service quản lý theme, tự cập nhật mỗi phút khi ở chế độ auto
 class ThemeService extends ChangeNotifier {
+  static const _keyMode = 'theme_mode';
+
   ThemeMode _themeMode = AppTheme.themeByTime();
-  bool _isAuto = true; // mặc định: tự động theo giờ
+  bool _isAuto = true;
   Timer? _timer;
 
   ThemeService() {
+    _load();
     _startTimer();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString(_keyMode) ?? 'auto';
+    if (saved == 'light') {
+      _isAuto = false;
+      _themeMode = ThemeMode.light;
+    } else if (saved == 'dark') {
+      _isAuto = false;
+      _themeMode = ThemeMode.dark;
+    } else {
+      _isAuto = true;
+      _themeMode = AppTheme.themeByTime();
+    }
+    notifyListeners();
+  }
+
+  Future<void> _save(String mode) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyMode, mode);
   }
 
   void _startTimer() {
@@ -60,28 +84,27 @@ class ThemeService extends ChangeNotifier {
   bool get isAuto => _isAuto;
   bool get isDark => _themeMode == ThemeMode.dark;
 
-  /// Cố định chế độ Sáng
   void setLight() {
     _isAuto = false;
     _themeMode = ThemeMode.light;
+    _save('light');
     notifyListeners();
   }
 
-  /// Cố định chế độ Tối
   void setDark() {
     _isAuto = false;
     _themeMode = ThemeMode.dark;
+    _save('dark');
     notifyListeners();
   }
 
-  /// Tự động theo giờ hệ thống (6:00–17:59 sáng, còn lại tối)
   void setAuto() {
     _isAuto = true;
     _themeMode = AppTheme.themeByTime();
+    _save('auto');
     notifyListeners();
   }
 
-  /// Gọi khi app resume: nếu đang auto thì cập nhật lại theme
   void resetToAuto() {
     if (_isAuto) {
       _themeMode = AppTheme.themeByTime();

@@ -263,7 +263,7 @@ class OrdersScreenState extends State<OrdersScreen> {
                     itemCount: _orders.length,
                     separatorBuilder: (_, __) => Divider(
                         height: 0,
-                        color: AppTheme.surfaceColor(isDark).withValues(alpha: 0.5)),
+                        color: AppTheme.dividerColor(isDark)),
                     itemBuilder: (_, i) => _buildOrderTile(_orders[i]),
                   ),
                 ),

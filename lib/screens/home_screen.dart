@@ -216,7 +216,7 @@ class _HomeScreenState extends State<HomeScreen>
       decoration: BoxDecoration(
         color: AppTheme.cardColor(isDark),
         border:
-            Border(top: BorderSide(color: AppTheme.surfaceColor(isDark), width: 0.5)),
+            Border(top: BorderSide(color: AppTheme.dividerColor(isDark), width: 1)),
       ),
       child: SafeArea(
         top: false,

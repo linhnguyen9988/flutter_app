@@ -27,8 +27,7 @@ class AppTheme {
   static Color cardColor(bool isDark) => isDark ? darkCard : Colors.white;
 
   /// Surface / input / divider nhẹ
-  static Color surfaceColor(bool isDark) =>
-      isDark ? darkSurface : lightSurface;
+  static Color surfaceColor(bool isDark) => isDark ? darkSurface : lightSurface;
 
   /// Text chính (tiêu đề, nội dung quan trọng)
   static Color textColor(bool isDark) =>
@@ -37,6 +36,10 @@ class AppTheme {
   /// Text phụ (mô tả, placeholder, icon mờ)
   static Color textSubColor(bool isDark) =>
       isDark ? textSecondary : lightTextSecondary;
+
+  /// Đường kẻ phân cách giữa các item
+  static Color dividerColor(bool isDark) =>
+      isDark ? const Color(0xFF3A3B3C) : const Color(0xFFCBCDD1);
 
   static ThemeData get darkTheme {
     return ThemeData(

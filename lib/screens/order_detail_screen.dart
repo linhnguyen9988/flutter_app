@@ -378,7 +378,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
 
   Widget _divider() => Divider(
       height: 0,
-      color: AppTheme.surfaceColor(isDark).withValues(alpha: 0.5),
+      color: AppTheme.dividerColor(isDark),
       indent: 16,
       endIndent: 16);
 

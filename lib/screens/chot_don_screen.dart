@@ -402,7 +402,8 @@ class ChotDonScreenState extends State<ChotDonScreen>
                     controller: _searchCtrl,
                     autofocus: true,
                     textAlignVertical: TextAlignVertical.center,
-                    style: TextStyle(color: AppTheme.textColor(isDark), fontSize: 15),
+                    style: TextStyle(
+                        color: AppTheme.textColor(isDark), fontSize: 15),
                     decoration: InputDecoration(
                       isCollapsed: true,
                       contentPadding: const EdgeInsets.symmetric(
@@ -419,7 +420,8 @@ class ChotDonScreenState extends State<ChotDonScreen>
                                 setState(() => _searchText = '');
                               },
                               child: Icon(Icons.close,
-                                  color: AppTheme.textSubColor(isDark), size: 18),
+                                  color: AppTheme.textSubColor(isDark),
+                                  size: 18),
                             )
                           : null,
                       border: InputBorder.none,
@@ -624,8 +626,9 @@ class ChotDonScreenState extends State<ChotDonScreen>
                     child: Text(name,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                            color:
-                                alreadyAdded ? AppTheme.primary : AppTheme.textColor(isDark),
+                            color: alreadyAdded
+                                ? AppTheme.primary
+                                : AppTheme.textColor(isDark),
                             fontSize: 13,
                             fontWeight: FontWeight.w600)),
                   ),
@@ -639,11 +642,13 @@ class ChotDonScreenState extends State<ChotDonScreen>
                     if (time.isNotEmpty)
                       Text(time,
                           style: TextStyle(
-                              color: AppTheme.textSubColor(isDark), fontSize: 11)),
+                              color: AppTheme.textSubColor(isDark),
+                              fontSize: 11)),
                     if (time.isNotEmpty && luotincuoi > 0)
                       Text(' · ',
                           style: TextStyle(
-                              color: AppTheme.textSubColor(isDark), fontSize: 11)),
+                              color: AppTheme.textSubColor(isDark),
+                              fontSize: 11)),
                     if (luotincuoi > 0)
                       Text('$luotincuoi chốt',
                           style: TextStyle(
@@ -688,8 +693,8 @@ class ChotDonScreenState extends State<ChotDonScreen>
         key: const PageStorageKey('comment_list'),
         controller: _commentScrollCtrl,
         itemCount: _filtered.length,
-        separatorBuilder: (_, __) => Divider(
-            height: 0, color: AppTheme.surfaceColor(isDark).withValues(alpha: 0.4)),
+        separatorBuilder: (_, __) =>
+            Divider(height: 0, color: AppTheme.dividerColor(isDark)),
         itemBuilder: (_, i) {
           final c = _filtered[i];
           return _buildCommentTile(c,
@@ -973,7 +978,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
               ]),
             ]),
           ),
-          const Divider(height: 0, color: Color(0xFF3A3B3C)),
+          Divider(height: 0, color: AppTheme.dividerColor(isDark)),
           Expanded(
             child: userComments.isEmpty
                 ? Center(
@@ -984,8 +989,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     itemCount: userComments.length,
                     separatorBuilder: (_, __) => Divider(
-                        height: 0,
-                        color: AppTheme.surfaceColor(isDark).withValues(alpha: 0.4)),
+                        height: 0, color: AppTheme.dividerColor(isDark)),
                     itemBuilder: (_, i) {
                       final uc = userComments[i];
                       return ListTile(
@@ -993,7 +997,8 @@ class ChotDonScreenState extends State<ChotDonScreen>
                             horizontal: 16, vertical: 4),
                         title: Text(uc.message ?? '',
                             style: TextStyle(
-                                color: AppTheme.textColor(isDark), fontSize: 13)),
+                                color: AppTheme.textColor(isDark),
+                                fontSize: 13)),
                         subtitle: uc.hasOrder
                             ? Padding(
                                 padding: const EdgeInsets.only(top: 4),
@@ -1252,7 +1257,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
           ),
         ]),
       ),
-      const Divider(height: 0, color: Color(0xFF3A3B3C)),
+      Divider(height: 0, color: AppTheme.dividerColor(isDark)),
       Expanded(
         child: items.isEmpty
             ? _buildEmpty('Khách này chưa có bình luận chốt')
@@ -1260,9 +1265,8 @@ class ChotDonScreenState extends State<ChotDonScreen>
                 key: ValueKey('${u.userid}_${items.length}'),
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 itemCount: items.length,
-                separatorBuilder: (_, __) => Divider(
-                    height: 0,
-                    color: AppTheme.surfaceColor(isDark).withValues(alpha: 0.4)),
+                separatorBuilder: (_, __) =>
+                    Divider(height: 0, color: AppTheme.dividerColor(isDark)),
                 itemBuilder: (_, i) {
                   if (i >= items.length) return const SizedBox.shrink();
                   final c = items[i];
@@ -1274,7 +1278,8 @@ class ChotDonScreenState extends State<ChotDonScreen>
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                     title: Text(c.message ?? '',
                         style: TextStyle(
-                            color: AppTheme.textSubColor(isDark), fontSize: 12)),
+                            color: AppTheme.textSubColor(isDark),
+                            fontSize: 12)),
                     subtitle: Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Wrap(
@@ -1334,7 +1339,8 @@ class ChotDonScreenState extends State<ChotDonScreen>
         child: Column(children: [
           Row(children: [
             Text('Hàng:',
-                style: TextStyle(color: AppTheme.textSubColor(isDark), fontSize: 13)),
+                style: TextStyle(
+                    color: AppTheme.textSubColor(isDark), fontSize: 13)),
             const SizedBox(width: 6),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -1350,12 +1356,14 @@ class ChotDonScreenState extends State<ChotDonScreen>
             ),
             const Spacer(),
             Text(_formatMoney(subtotal),
-                style: TextStyle(color: AppTheme.textColor(isDark), fontSize: 13)),
+                style:
+                    TextStyle(color: AppTheme.textColor(isDark), fontSize: 13)),
           ]),
           const SizedBox(height: 4),
           Row(children: [
             Text('Ship:',
-                style: TextStyle(color: AppTheme.textSubColor(isDark), fontSize: 13)),
+                style: TextStyle(
+                    color: AppTheme.textSubColor(isDark), fontSize: 13)),
             const SizedBox(width: 8),
             GestureDetector(
               onTap: () => setState(() => _includeShip = !_includeShip),
@@ -1380,8 +1388,9 @@ class ChotDonScreenState extends State<ChotDonScreen>
                         ? Icons.check_circle_outline
                         : Icons.remove_circle_outline,
                     size: 13,
-                    color:
-                        _includeShip ? AppTheme.accent : AppTheme.textSubColor(isDark),
+                    color: _includeShip
+                        ? AppTheme.accent
+                        : AppTheme.textSubColor(isDark),
                   ),
                   const SizedBox(width: 4),
                   Text(
@@ -1530,7 +1539,8 @@ class ChotDonScreenState extends State<ChotDonScreen>
             ]),
             const SizedBox(height: 8),
             Text(c.message ?? '',
-                style: TextStyle(color: AppTheme.textSubColor(isDark), fontSize: 13)),
+                style: TextStyle(
+                    color: AppTheme.textSubColor(isDark), fontSize: 13)),
             if (c.chot != null && c.chot!.isNotEmpty) ...[
               const SizedBox(height: 8),
               Row(children: [
@@ -1552,11 +1562,13 @@ class ChotDonScreenState extends State<ChotDonScreen>
                 child: TextField(
                   controller: giaCtrl,
                   keyboardType: TextInputType.number,
-                  style: TextStyle(color: AppTheme.textColor(isDark), fontSize: 14),
+                  style: TextStyle(
+                      color: AppTheme.textColor(isDark), fontSize: 14),
                   decoration: InputDecoration(
                     hintText: 'Giá (VD: 35000)',
                     hintStyle: TextStyle(
-                        color: AppTheme.textSubColor(isDark).withValues(alpha: 0.6),
+                        color: AppTheme.textSubColor(isDark)
+                            .withValues(alpha: 0.6),
                         fontSize: 12),
                     prefixIcon: Icon(Icons.payments_outlined,
                         color: AppTheme.textSubColor(isDark), size: 16),
@@ -1577,12 +1589,14 @@ class ChotDonScreenState extends State<ChotDonScreen>
                 child: TextField(
                   controller: slCtrl,
                   keyboardType: TextInputType.number,
-                  style: TextStyle(color: AppTheme.textColor(isDark), fontSize: 14),
+                  style: TextStyle(
+                      color: AppTheme.textColor(isDark), fontSize: 14),
                   textAlign: TextAlign.center,
                   decoration: InputDecoration(
                     hintText: 'SL',
                     hintStyle: TextStyle(
-                        color: AppTheme.textSubColor(isDark).withValues(alpha: 0.6),
+                        color: AppTheme.textSubColor(isDark)
+                            .withValues(alpha: 0.6),
                         fontSize: 12),
                     filled: true,
                     fillColor: AppTheme.surfaceColor(isDark),
@@ -1638,7 +1652,7 @@ class ChotDonScreenState extends State<ChotDonScreen>
                   label: const Text('In', style: TextStyle(fontSize: 13)),
                   style: OutlinedButton.styleFrom(
                       foregroundColor: AppTheme.textSubColor(isDark),
-                      side: BorderSide(color: AppTheme.surfaceColor(isDark)),
+                      side: BorderSide(color: AppTheme.dividerColor(isDark)),
                       padding: const EdgeInsets.symmetric(vertical: 10)),
                   onPressed: () {
                     Navigator.pop(context);
@@ -1910,7 +1924,8 @@ class ChotDonScreenState extends State<ChotDonScreen>
 
   Widget _buildEmpty(String msg) => Center(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(Icons.inbox_outlined, color: AppTheme.textSubColor(isDark), size: 48),
+          Icon(Icons.inbox_outlined,
+              color: AppTheme.textSubColor(isDark), size: 48),
           const SizedBox(height: 12),
           Text(msg,
               style: TextStyle(color: AppTheme.textSubColor(isDark)),

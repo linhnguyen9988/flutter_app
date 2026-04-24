@@ -180,8 +180,7 @@ class CustomersScreenState extends State<CustomersScreen> {
                   child: ListView.separated(
                     itemCount: _customers.length,
                     separatorBuilder: (_, __) => Divider(
-                        height: 0,
-                        color: AppTheme.surfaceColor(isDark).withValues(alpha: 0.5)),
+                        height: 0, color: AppTheme.dividerColor(isDark)),
                     itemBuilder: (_, i) => _buildCustomerTile(_customers[i]),
                   ),
                 ),

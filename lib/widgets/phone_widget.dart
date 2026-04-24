@@ -101,7 +101,6 @@ class PhoneWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final defaultStyle = TextStyle(
       color: AppTheme.primary,
       fontSize: 13,

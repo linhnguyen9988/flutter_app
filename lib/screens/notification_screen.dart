@@ -264,7 +264,7 @@ class _NotificationScreenState extends State<NotificationScreen>
                         itemCount: _notis.length,
                         separatorBuilder: (_, __) => Divider(
                           height: 0,
-                          color: AppTheme.surfaceColor(isDark).withValues(alpha: 0.5),
+                          color: AppTheme.dividerColor(isDark),
                         ),
                         itemBuilder: (_, i) {
                           final n = _notis[i];
