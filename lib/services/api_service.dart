@@ -191,7 +191,7 @@ class ApiService {
     orders.sort((a, b) {
       final tA = a.time ?? a.date ?? '';
       final tB = b.time ?? b.date ?? '';
-      final timeCmp = tB.compareTo(tA); // DESC
+      final timeCmp = tB.compareTo(tA);
       if (timeCmp != 0) return timeCmp;
       final cA = a.statuscode ?? 0;
       final cB = b.statuscode ?? 0;

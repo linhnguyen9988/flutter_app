@@ -81,7 +81,6 @@ class NotificationService {
       final body = message.notification?.body ?? message.data['body'] ?? '';
       if (title.isNotEmpty) {
         _show(title, body, message.data.isNotEmpty ? message.data : null);
-        // Broadcast noti mới để các screen đang mở cập nhật realtime
         _newNotiController.add({
           'title': title,
           'body': body,

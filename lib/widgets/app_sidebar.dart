@@ -164,7 +164,6 @@ class _AppSidebarState extends State<AppSidebar> {
           child: SafeArea(
             child: Column(
               children: [
-                // Header
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
@@ -216,10 +215,7 @@ class _AppSidebarState extends State<AppSidebar> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 8),
-
-                // Biometric
                 if (_biometricAvailable)
                   _SidebarTile(
                     icon: Icons.fingerprint,
@@ -231,28 +227,19 @@ class _AppSidebarState extends State<AppSidebar> {
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                   ),
-
-                // Theme switcher
                 const _ThemeSwitcherTile(),
-
-                // Notifications
                 _SidebarTile(
                   icon: Icons.notifications_outlined,
                   label: 'Thông báo',
                   onTap: _showNotifications,
                   badge: _unreadCount,
                 ),
-
-                // Change password
                 _SidebarTile(
                   icon: Icons.lock_outline,
                   label: 'Đổi mật khẩu',
                   onTap: _showChangePassword,
                 ),
-
                 const Spacer(),
-
-                // Logout button
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   child: GestureDetector(
@@ -295,8 +282,6 @@ class _AppSidebarState extends State<AppSidebar> {
   }
 }
 
-// ─── Theme Switcher Tile ───────────────────────────────────────────────────
-
 enum _ThemeOption { light, dark, auto }
 
 class _ThemeSwitcherTile extends StatelessWidget {
@@ -311,7 +296,6 @@ class _ThemeSwitcherTile extends StatelessWidget {
     final subColor =
         isDark ? AppTheme.textSubColor(isDark) : const Color(0xFF65676B);
 
-    // Xác định option hiện tại
     final current = themeService.isAuto
         ? _ThemeOption.auto
         : themeService.themeMode == ThemeMode.dark
@@ -436,8 +420,6 @@ class _ThemeSwitcherTile extends StatelessWidget {
   }
 }
 
-// ─── Generic Sidebar Tile ─────────────────────────────────────────────────
-
 class _SidebarTile extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -525,8 +507,6 @@ class _SidebarTile extends StatelessWidget {
     );
   }
 }
-
-// ─── Change Password Sheet ────────────────────────────────────────────────
 
 class _ChangePasswordSheet extends StatefulWidget {
   static void show(BuildContext context) {

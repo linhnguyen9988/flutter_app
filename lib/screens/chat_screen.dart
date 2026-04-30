@@ -54,7 +54,6 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _loadingMore = false;
   final _picker = ImagePicker();
   io.Socket? _socket;
-  // ignore: unused_field
   bool _isLoadingHistory = false;
   bool _initialLoad = true;
   int _readWatermark = 0;
@@ -260,7 +259,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _loadMore() async {
-    if (_loadingMore || !_hasMore) return;
+    if (_loadingMore || !_hasMore || _isLoadingHistory) return;
     _isLoadingHistory = true;
     setState(() => _loadingMore = true);
     _offset += 10;
@@ -567,7 +566,6 @@ class _ChatScreenState extends State<ChatScreen> {
         !isIncoming && _readWatermark >= msg.timestamp && msg.timestamp > 0;
     final reaction = _reactions[msg.messid];
 
-    // Build absolute URLs for all images in this message (for gallery)
     final galleryUrls = images
         .where((p) => p.startsWith('http') || !p.toLowerCase().contains('like'))
         .where((p) => p.startsWith('http'))
@@ -748,7 +746,6 @@ class _ChatScreenState extends State<ChatScreen> {
         urls.where((u) => !u.toLowerCase().contains('like')).toList();
     final likeCount = urls.length - validUrls.length;
 
-    // Build absolute URLs list for gallery viewer (only http images)
     final absGalleryUrls = galleryUrls ??
         validUrls
             .where((u) => u.startsWith('http'))
@@ -1105,8 +1102,6 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  /// Mở ảnh fullscreen. Nếu [allUrls] có nhiều hơn 1 phần tử,
-  /// người dùng có thể vuốt qua/lại để xem các ảnh khác cùng tin nhắn.
   void _openImage(String url, {List<String>? allUrls}) {
     final urls = (allUrls != null && allUrls.isNotEmpty) ? allUrls : [url];
     final initialIndex = urls.indexOf(url).clamp(0, urls.length - 1);
@@ -1126,9 +1121,6 @@ class _ChatScreenState extends State<ChatScreen> {
       '${dt.day}/${dt.month}/${dt.year}';
 }
 
-// ---------------------------------------------------------------------------
-// Gallery viewer — vuốt qua/lại để xem nhiều ảnh, vuốt lên/xuống để đóng
-// ---------------------------------------------------------------------------
 class _ImageGalleryViewer extends StatefulWidget {
   final List<String> urls;
   final int initialIndex;
@@ -1147,11 +1139,9 @@ class _ImageGalleryViewerState extends State<_ImageGalleryViewer>
   late final PageController _pageCtrl;
   late int _currentIndex;
 
-  // For swipe-to-dismiss tracking
   double _dragOffsetY = 0.0;
   bool _isDragging = false;
 
-  // Animate back to centre when drag is cancelled
   late final AnimationController _snapBackCtrl;
   late Animation<double> _snapBackAnim;
 
@@ -1190,24 +1180,22 @@ class _ImageGalleryViewerState extends State<_ImageGalleryViewer>
 
   void _onVerticalDragEnd(DragEndDetails details) {
     if (_dragOffsetY.abs() >= _dismissThreshold) {
-      // Dismiss — pop the route
       Navigator.of(context).pop();
     } else {
-      // Snap back to centre
       final startOffset = _dragOffsetY;
       _snapBackAnim = Tween<double>(begin: startOffset, end: 0.0).animate(
         CurvedAnimation(parent: _snapBackCtrl, curve: Curves.easeOut),
       )..addListener(() {
           if (mounted) setState(() => _dragOffsetY = _snapBackAnim.value);
         });
-      _snapBackCtrl.forward(from: 0.0);
-      setState(() => _isDragging = false);
+      _snapBackCtrl.forward(from: 0.0).whenComplete(() {
+        if (mounted) setState(() => _isDragging = false);
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Background dims as the user drags further from centre
     final dimFactor = (1.0 - (_dragOffsetY.abs() / 300.0).clamp(0.0, 1.0));
 
     return Scaffold(
@@ -1228,11 +1216,13 @@ class _ImageGalleryViewerState extends State<_ImageGalleryViewer>
         onVerticalDragEnd: _onVerticalDragEnd,
         child: Stack(
           children: [
-            // Main swipeable page view — shifted vertically while dragging
             Transform.translate(
               offset: Offset(0, _dragOffsetY),
               child: PageView.builder(
                 controller: _pageCtrl,
+                physics: _isDragging
+                    ? const NeverScrollableScrollPhysics()
+                    : const PageScrollPhysics(),
                 itemCount: widget.urls.length,
                 onPageChanged: (i) => setState(() => _currentIndex = i),
                 itemBuilder: (_, i) {
@@ -1264,8 +1254,6 @@ class _ImageGalleryViewerState extends State<_ImageGalleryViewer>
                 },
               ),
             ),
-
-            // Dot indicators
             if (widget.urls.length > 1)
               Positioned(
                 bottom: 24,

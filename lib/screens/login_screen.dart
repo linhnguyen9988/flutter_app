@@ -23,8 +23,6 @@ class _LoginScreenState extends State<LoginScreen>
   bool _loading = false;
   String _error = '';
   bool _biometricAvailable = false;
-  // ignore: unused_field
-  bool _biometricEnabled = false;
   late AnimationController _animCtrl;
   late Animation<double> _fadeAnim;
   late Animation<Offset> _slideAnim;
@@ -51,7 +49,6 @@ class _LoginScreenState extends State<LoginScreen>
     if (mounted) {
       setState(() {
         _biometricAvailable = available && enabled;
-        _biometricEnabled = enabled;
       });
     }
   }
@@ -313,7 +310,8 @@ class _LoginScreenState extends State<LoginScreen>
                           const SizedBox(height: 6),
                           Text('Đăng nhập sinh trắc học',
                               style: TextStyle(
-                                  color: AppTheme.textSubColor(isDark), fontSize: 12)),
+                                  color: AppTheme.textSubColor(isDark),
+                                  fontSize: 12)),
                         ]),
                       ),
                     ],
@@ -322,8 +320,8 @@ class _LoginScreenState extends State<LoginScreen>
                       child: Text(
                         'ADGB Version 1.0.0',
                         style: TextStyle(
-                            color:
-                                AppTheme.textSubColor(isDark).withValues(alpha: 0.4),
+                            color: AppTheme.textSubColor(isDark)
+                                .withValues(alpha: 0.4),
                             fontSize: 12),
                       ),
                     ),
@@ -355,8 +353,8 @@ class _LoginScreenState extends State<LoginScreen>
   }) =>
       InputDecoration(
         hintText: hint,
-        hintStyle:
-            TextStyle(color: AppTheme.textSubColor(isDark).withValues(alpha: 0.5)),
+        hintStyle: TextStyle(
+            color: AppTheme.textSubColor(isDark).withValues(alpha: 0.5)),
         prefixIcon: Icon(icon, color: AppTheme.textSubColor(isDark), size: 20),
         suffixIcon: suffix,
         filled: true,

@@ -18,11 +18,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   int _currentIndex = 0;
 
-  // 4 tabs thực (QR giữa là nút nổi, không phải tab)
   final List<Widget> _screens = const [
     MessagingScreen(),
     ChotDonScreen(),
-    OrdersScreen(), // placeholder bên phải QR
+    OrdersScreen(),
     CustomersScreen(),
   ];
 
@@ -88,14 +87,11 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            // Left side: 2 tabs
             _navItem(
                 0, Icons.chat_bubble_outline, Icons.chat_bubble, 'Tin nhắn'),
             _navItem(
                 1, Icons.shopping_bag_outlined, Icons.shopping_bag, 'Chốt đơn'),
-            // Center: space for FAB
             const SizedBox(width: 60),
-            // Right side: 2 tabs
             _navItem(2, Icons.local_shipping_outlined, Icons.local_shipping,
                 'Đơn hàng'),
             _navItem(3, Icons.people_outline, Icons.people, 'Khách hàng'),
@@ -117,14 +113,17 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Icon(
               isSelected ? activeIcon : icon,
-              color: isSelected ? AppTheme.primary : AppTheme.textSubColor(isDark),
+              color:
+                  isSelected ? AppTheme.primary : AppTheme.textSubColor(isDark),
               size: 24,
             ),
             const SizedBox(height: 2),
             Text(
               label,
               style: TextStyle(
-                color: isSelected ? AppTheme.primary : AppTheme.textSubColor(isDark),
+                color: isSelected
+                    ? AppTheme.primary
+                    : AppTheme.textSubColor(isDark),
                 fontSize: 10,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
               ),
