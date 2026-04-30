@@ -369,9 +369,12 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
       if (_includeShipLive) {
         buffer.writeln('Phí ship 20k. Tổng ${formatMoneyK(grandTotal)}.');
       } else {
-        buffer.writeln('Tổng ${formatMoneyK(grandTotal)}.');
+        buffer.writeln('Miễn ship. Tổng ${formatMoneyK(grandTotal)}.');
       }
-      buffer.write('Em ship hàng $pronoun nha!');
+      final hasAddress = _addressCtrl.text.trim().isNotEmpty;
+      buffer.write(hasAddress
+          ? 'Em ship hàng $pronoun nha!'
+          : 'Em xin địa chỉ để gửi hàng nha!');
       return buffer.toString();
     }
 
@@ -572,7 +575,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
         builder: (_) => AlertDialog(
           backgroundColor: AppTheme.cardColor(isDark),
           title: Text('Cảnh báo khối lượng',
-              style: TextStyle(color: AppTheme.textColor(isDark), fontSize: 16)),
+              style:
+                  TextStyle(color: AppTheme.textColor(isDark), fontSize: 16)),
           content: Text(
             'Khối lượng $kgStr kg khá lớn (> 20kg). Vẫn tiếp tục lên đơn?',
             style:
@@ -801,6 +805,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
         'note': _noteCtrl.text,
         'label': _selectedLabel,
         'tag': _tagCtrl.text,
+        'important': _customer.important ?? '0',
+        'userid': _customer.userid,
       });
       if (ok) {
         setState(() => _editingFields.clear());
@@ -1066,7 +1072,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
                             icon: Icon(Icons.expand_more,
                                 color: AppTheme.textSubColor(isDark), size: 18),
                             style: TextStyle(
-                                color: AppTheme.textColor(isDark), fontSize: 13),
+                                color: AppTheme.textColor(isDark),
+                                fontSize: 13),
                             items: List.generate(_savedAddresses.length, (i) {
                               final a = _savedAddresses[i];
                               final label = _addressLabel(a);
@@ -1075,7 +1082,8 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
                                 child: Text(label,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
-                                        color: AppTheme.textColor(isDark), fontSize: 12)),
+                                        color: AppTheme.textColor(isDark),
+                                        fontSize: 12)),
                               );
                             }),
                             onChanged: (i) {

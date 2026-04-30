@@ -1169,10 +1169,15 @@ class ChotDonScreenState extends State<ChotDonScreen>
     const ship = 20000;
     final grandTotal = total + (includeShip ? ship : 0);
 
+    final hasAddress = user.diachi != null && user.diachi!.trim().isNotEmpty;
+    final shipLine = hasAddress
+        ? 'Em ship hàng $pronoun nha!'
+        : 'Em xin địa chỉ để gửi hàng nha!';
+
     return 'Đơn hàng của $pronoun:\n'
         '${lines.join("\n")}\n'
-        '${includeShip ? "Phí ship 20k. " : ""}Tổng ${_formatMoneyK(grandTotal)}.\n'
-        'Em ship hàng $pronoun nha!';
+        '${includeShip ? "Phí ship 20k. " : "Miễn ship. "}Tổng ${_formatMoneyK(grandTotal)}.\n'
+        '$shipLine';
   }
 
   Widget _buildCartTab() {

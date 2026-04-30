@@ -546,12 +546,33 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  List<String> _parseImageUrls(Message msg) {
+    final images = msg.imageList;
+    if (images.isEmpty) return [];
+
+    if (images.length == 1 && images.first.contains(';')) {
+      return images.first
+          .split(';')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
+    }
+    return images;
+  }
+
   Widget _buildBubble(Message msg) {
     final isIncoming = msg.sender == widget.sender;
-    final images = msg.imageList;
+    final images = _parseImageUrls(msg);
     final isRead =
         !isIncoming && _readWatermark >= msg.timestamp && msg.timestamp > 0;
     final reaction = _reactions[msg.messid];
+
+    // Build absolute URLs for all images in this message (for gallery)
+    final galleryUrls = images
+        .where((p) => p.startsWith('http') || !p.toLowerCase().contains('like'))
+        .where((p) => p.startsWith('http'))
+        .map((p) => _getAbsoluteUrl(p))
+        .toList();
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
@@ -574,7 +595,20 @@ class _ChatScreenState extends State<ChatScreen> {
                   ? CrossAxisAlignment.start
                   : CrossAxisAlignment.end,
               children: [
-                if (images.isNotEmpty)
+                if (images.length > 1)
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      _buildImageGrid(images, galleryUrls: galleryUrls),
+                      if (reaction != null)
+                        Positioned(
+                          bottom: -10,
+                          left: 6,
+                          child: _buildReactionBadge(reaction),
+                        ),
+                    ],
+                  )
+                else if (images.length == 1)
                   ...images.map((path) {
                     if (path.toLowerCase().contains('like')) {
                       return const Padding(
@@ -603,24 +637,12 @@ class _ChatScreenState extends State<ChatScreen> {
                       child: Stack(
                         clipBehavior: Clip.none,
                         children: [
-                          _buildImageBubble(url),
+                          _buildImageBubble(url, allUrls: [url]),
                           if (reaction != null)
                             Positioned(
                               bottom: -10,
                               left: 6,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 4, vertical: 1),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.cardColor(isDark),
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                      color: AppTheme.surfaceColor(isDark),
-                                      width: 1.5),
-                                ),
-                                child: Text(reaction,
-                                    style: const TextStyle(fontSize: 12)),
-                              ),
+                              child: _buildReactionBadge(reaction),
                             ),
                         ],
                       ),
@@ -668,19 +690,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         Positioned(
                           bottom: -10,
                           left: 6,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 4, vertical: 1),
-                            decoration: BoxDecoration(
-                              color: AppTheme.cardColor(isDark),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                  color: AppTheme.surfaceColor(isDark),
-                                  width: 1.5),
-                            ),
-                            child: Text(reaction,
-                                style: const TextStyle(fontSize: 12)),
-                          ),
+                          child: _buildReactionBadge(reaction),
                         ),
                     ],
                   ),
@@ -730,9 +740,244 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _buildImageBubble(String url) {
+  Widget _buildImageGrid(List<String> urls, {List<String>? galleryUrls}) {
+    const double gridWidth = 220;
+    const double gap = 2.0;
+
+    final validUrls =
+        urls.where((u) => !u.toLowerCase().contains('like')).toList();
+    final likeCount = urls.length - validUrls.length;
+
+    // Build absolute URLs list for gallery viewer (only http images)
+    final absGalleryUrls = galleryUrls ??
+        validUrls
+            .where((u) => u.startsWith('http'))
+            .map((u) => _getAbsoluteUrl(u))
+            .toList();
+
+    final count = validUrls.length;
+
+    Widget grid;
+
+    if (count == 0) {
+      grid = const SizedBox.shrink();
+    } else if (count == 2) {
+      grid = SizedBox(
+        width: gridWidth,
+        child: Row(
+          children: [
+            Expanded(
+                child: _buildGridCell(validUrls[0],
+                    height: 140,
+                    allUrls: absGalleryUrls,
+                    borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        bottomLeft: Radius.circular(12)))),
+            SizedBox(width: gap),
+            Expanded(
+                child: _buildGridCell(validUrls[1],
+                    height: 140,
+                    allUrls: absGalleryUrls,
+                    borderRadius: const BorderRadius.only(
+                        topRight: Radius.circular(12),
+                        bottomRight: Radius.circular(12)))),
+          ],
+        ),
+      );
+    } else if (count == 3) {
+      grid = SizedBox(
+        width: gridWidth,
+        child: Row(
+          children: [
+            Expanded(
+              child: _buildGridCell(validUrls[0],
+                  height: 142 + gap,
+                  allUrls: absGalleryUrls,
+                  borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(12),
+                      bottomLeft: Radius.circular(12))),
+            ),
+            SizedBox(width: gap),
+            Expanded(
+              child: Column(
+                children: [
+                  _buildGridCell(validUrls[1],
+                      height: 70,
+                      allUrls: absGalleryUrls,
+                      borderRadius: const BorderRadius.only(
+                          topRight: Radius.circular(12))),
+                  SizedBox(height: gap),
+                  _buildGridCell(validUrls[2],
+                      height: 70,
+                      allUrls: absGalleryUrls,
+                      borderRadius: const BorderRadius.only(
+                          bottomRight: Radius.circular(12))),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      final displayUrls = validUrls.take(4).toList();
+      final overflow = count - 4;
+
+      grid = SizedBox(
+        width: gridWidth,
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                    child: _buildGridCell(displayUrls[0],
+                        height: 108,
+                        allUrls: absGalleryUrls,
+                        borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(12)))),
+                SizedBox(width: gap),
+                Expanded(
+                    child: _buildGridCell(displayUrls[1],
+                        height: 108,
+                        allUrls: absGalleryUrls,
+                        borderRadius: const BorderRadius.only(
+                            topRight: Radius.circular(12)))),
+              ],
+            ),
+            SizedBox(height: gap),
+            Row(
+              children: [
+                Expanded(
+                    child: _buildGridCell(displayUrls[2],
+                        height: 108,
+                        allUrls: absGalleryUrls,
+                        borderRadius: const BorderRadius.only(
+                            bottomLeft: Radius.circular(12)))),
+                SizedBox(width: gap),
+                Expanded(
+                  child: Stack(
+                    children: [
+                      _buildGridCell(displayUrls[3],
+                          height: 108,
+                          allUrls: absGalleryUrls,
+                          borderRadius: const BorderRadius.only(
+                              bottomRight: Radius.circular(12))),
+                      if (overflow > 0)
+                        Positioned.fill(
+                          child: ClipRRect(
+                            borderRadius: const BorderRadius.only(
+                                bottomRight: Radius.circular(12)),
+                            child: Container(
+                              color: Colors.black54,
+                              child: Center(
+                                child: Text(
+                                  '+$overflow',
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: grid,
+        ),
+        if (likeCount > 0)
+          const Padding(
+            padding: EdgeInsets.only(top: 4),
+            child: Text('👍', style: TextStyle(fontSize: 30)),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildGridCell(String path,
+      {required double height,
+      BorderRadius? borderRadius,
+      List<String>? allUrls}) {
+    final isLocal = !path.startsWith('http');
+    final url = isLocal ? path : _getAbsoluteUrl(path);
+
+    Widget image;
+    if (isLocal) {
+      image = Image.file(
+        File(url),
+        height: height,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => Container(
+          height: height,
+          color: AppTheme.surfaceColor(isDark),
+          child: Icon(Icons.broken_image, color: AppTheme.textSubColor(isDark)),
+        ),
+      );
+    } else {
+      image = Image.network(
+        url,
+        height: height,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        loadingBuilder: (_, child, progress) {
+          if (progress == null) return child;
+          return Container(
+            height: height,
+            color: AppTheme.surfaceColor(isDark),
+            child: const Center(
+              child: CircularProgressIndicator(
+                  strokeWidth: 2, color: AppTheme.primary),
+            ),
+          );
+        },
+        errorBuilder: (_, __, ___) => Container(
+          height: height,
+          color: AppTheme.surfaceColor(isDark),
+          child: Icon(Icons.broken_image, color: AppTheme.textSubColor(isDark)),
+        ),
+      );
+    }
+
     return GestureDetector(
-      onTap: () => _openImage(url),
+      onTap: () {
+        if (isLocal) return;
+        _openImage(url, allUrls: allUrls);
+      },
+      child: ClipRRect(
+        borderRadius: borderRadius ?? BorderRadius.zero,
+        child: image,
+      ),
+    );
+  }
+
+  Widget _buildReactionBadge(String emoji) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+      decoration: BoxDecoration(
+        color: AppTheme.cardColor(isDark),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppTheme.surfaceColor(isDark), width: 1.5),
+      ),
+      child: Text(emoji, style: const TextStyle(fontSize: 12)),
+    );
+  }
+
+  Widget _buildImageBubble(String url, {List<String>? allUrls}) {
+    return GestureDetector(
+      onTap: () => _openImage(url, allUrls: allUrls),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: Image.network(
@@ -802,7 +1047,7 @@ class _ChatScreenState extends State<ChatScreen> {
           GestureDetector(
             onTap: _pickFromCamera,
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
               child: Icon(Icons.camera_alt_outlined,
                   color: AppTheme.textSubColor(isDark), size: 22),
             ),
@@ -810,7 +1055,7 @@ class _ChatScreenState extends State<ChatScreen> {
           GestureDetector(
             onTap: _pickFromGallery,
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
               child: Icon(Icons.photo_library_outlined,
                   color: AppTheme.textSubColor(isDark), size: 22),
             ),
@@ -860,24 +1105,195 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  void _openImage(String url) {
+  /// Mở ảnh fullscreen. Nếu [allUrls] có nhiều hơn 1 phần tử,
+  /// người dùng có thể vuốt qua/lại để xem các ảnh khác cùng tin nhắn.
+  void _openImage(String url, {List<String>? allUrls}) {
+    final urls = (allUrls != null && allUrls.isNotEmpty) ? allUrls : [url];
+    final initialIndex = urls.indexOf(url).clamp(0, urls.length - 1);
     Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (_) => Scaffold(
-                  backgroundColor: Colors.black,
-                  appBar: AppBar(
-                      backgroundColor: Colors.black,
-                      iconTheme: const IconThemeData(color: Colors.white)),
-                  body: Center(
-                      child: InteractiveViewer(
-                          child: Image.network(url, fit: BoxFit.contain))),
-                )));
+      context,
+      MaterialPageRoute(
+        builder: (_) => _ImageGalleryViewer(
+          urls: urls,
+          initialIndex: initialIndex,
+        ),
+      ),
+    );
   }
 
   String _formatTime(DateTime dt) =>
       '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} '
       '${dt.day}/${dt.month}/${dt.year}';
+}
+
+// ---------------------------------------------------------------------------
+// Gallery viewer — vuốt qua/lại để xem nhiều ảnh, vuốt lên/xuống để đóng
+// ---------------------------------------------------------------------------
+class _ImageGalleryViewer extends StatefulWidget {
+  final List<String> urls;
+  final int initialIndex;
+
+  const _ImageGalleryViewer({
+    required this.urls,
+    this.initialIndex = 0,
+  });
+
+  @override
+  State<_ImageGalleryViewer> createState() => _ImageGalleryViewerState();
+}
+
+class _ImageGalleryViewerState extends State<_ImageGalleryViewer>
+    with SingleTickerProviderStateMixin {
+  late final PageController _pageCtrl;
+  late int _currentIndex;
+
+  // For swipe-to-dismiss tracking
+  double _dragOffsetY = 0.0;
+  bool _isDragging = false;
+
+  // Animate back to centre when drag is cancelled
+  late final AnimationController _snapBackCtrl;
+  late Animation<double> _snapBackAnim;
+
+  static const double _dismissThreshold = 50.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageCtrl = PageController(initialPage: widget.initialIndex);
+
+    _snapBackCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pageCtrl.dispose();
+    _snapBackCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onVerticalDragStart(DragStartDetails details) {
+    _snapBackCtrl.stop();
+    setState(() {
+      _isDragging = true;
+      _dragOffsetY = 0.0;
+    });
+  }
+
+  void _onVerticalDragUpdate(DragUpdateDetails details) {
+    setState(() => _dragOffsetY += details.delta.dy);
+  }
+
+  void _onVerticalDragEnd(DragEndDetails details) {
+    if (_dragOffsetY.abs() >= _dismissThreshold) {
+      // Dismiss — pop the route
+      Navigator.of(context).pop();
+    } else {
+      // Snap back to centre
+      final startOffset = _dragOffsetY;
+      _snapBackAnim = Tween<double>(begin: startOffset, end: 0.0).animate(
+        CurvedAnimation(parent: _snapBackCtrl, curve: Curves.easeOut),
+      )..addListener(() {
+          if (mounted) setState(() => _dragOffsetY = _snapBackAnim.value);
+        });
+      _snapBackCtrl.forward(from: 0.0);
+      setState(() => _isDragging = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Background dims as the user drags further from centre
+    final dimFactor = (1.0 - (_dragOffsetY.abs() / 300.0).clamp(0.0, 1.0));
+
+    return Scaffold(
+      backgroundColor: Colors.black.withValues(alpha: dimFactor),
+      appBar: AppBar(
+        backgroundColor: Colors.black.withValues(alpha: dimFactor),
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: widget.urls.length > 1
+            ? Text(
+                '${_currentIndex + 1} / ${widget.urls.length}',
+                style: const TextStyle(color: Colors.white, fontSize: 15),
+              )
+            : null,
+      ),
+      body: GestureDetector(
+        onVerticalDragStart: _onVerticalDragStart,
+        onVerticalDragUpdate: _onVerticalDragUpdate,
+        onVerticalDragEnd: _onVerticalDragEnd,
+        child: Stack(
+          children: [
+            // Main swipeable page view — shifted vertically while dragging
+            Transform.translate(
+              offset: Offset(0, _dragOffsetY),
+              child: PageView.builder(
+                controller: _pageCtrl,
+                itemCount: widget.urls.length,
+                onPageChanged: (i) => setState(() => _currentIndex = i),
+                itemBuilder: (_, i) {
+                  return InteractiveViewer(
+                    minScale: 0.5,
+                    maxScale: 4.0,
+                    child: Center(
+                      child: Image.network(
+                        widget.urls[i],
+                        fit: BoxFit.contain,
+                        loadingBuilder: (_, child, progress) {
+                          if (progress == null) return child;
+                          return const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white54,
+                            ),
+                          );
+                        },
+                        errorBuilder: (_, __, ___) => const Center(
+                          child: Icon(
+                            Icons.broken_image,
+                            color: Colors.white54,
+                            size: 48,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+
+            // Dot indicators
+            if (widget.urls.length > 1)
+              Positioned(
+                bottom: 24,
+                left: 0,
+                right: 0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    widget.urls.length,
+                    (i) => AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      width: _currentIndex == i ? 20 : 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color:
+                            _currentIndex == i ? Colors.white : Colors.white38,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _AvatarWithFallback extends StatefulWidget {
