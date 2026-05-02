@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:url_launcher/url_launcher.dart';
+import 'dart:io' show Platform;
 import '../theme/app_theme.dart';
 import '../models/live_comment.dart';
 import '../models/customer.dart';
@@ -943,8 +944,15 @@ class ChotDonScreenState extends State<ChotDonScreen>
                           c.customerPhone!.isNotEmpty)
                         GestureDetector(
                           onTap: () async {
-                            final uri = Uri.parse('tel:${c.customerPhone}');
-                            if (await canLaunchUrl(uri)) launchUrl(uri);
+                            try {
+                              if (Platform.isAndroid) {
+                                const platform = MethodChannel('app/phone_call');
+                                await platform.invokeMethod('call', {'number': c.customerPhone});
+                              } else {
+                                final uri = Uri.parse('tel:${c.customerPhone}');
+                                await launchUrl(uri);
+                              }
+                            } catch (_) {}
                           },
                           onLongPress: () {
                             HapticFeedback.mediumImpact();
@@ -1233,8 +1241,15 @@ class ChotDonScreenState extends State<ChotDonScreen>
                 if (u.customerPhone != null && u.customerPhone!.isNotEmpty)
                   GestureDetector(
                     onTap: () async {
-                      final uri = Uri.parse('tel:${u.customerPhone}');
-                      if (await canLaunchUrl(uri)) launchUrl(uri);
+                      try {
+                        if (Platform.isAndroid) {
+                          const platform = MethodChannel('app/phone_call');
+                          await platform.invokeMethod('call', {'number': u.customerPhone});
+                        } else {
+                          final uri = Uri.parse('tel:${u.customerPhone}');
+                          await launchUrl(uri);
+                        }
+                      } catch (_) {}
                     },
                     onLongPress: () {
                       HapticFeedback.mediumImpact();
@@ -1519,8 +1534,15 @@ class ChotDonScreenState extends State<ChotDonScreen>
                     if (c.customerPhone != null && c.customerPhone!.isNotEmpty)
                       GestureDetector(
                         onTap: () async {
-                          final uri = Uri.parse('tel:${c.customerPhone}');
-                          if (await canLaunchUrl(uri)) launchUrl(uri);
+                          try {
+                            if (Platform.isAndroid) {
+                              const platform = MethodChannel('app/phone_call');
+                              await platform.invokeMethod('call', {'number': c.customerPhone});
+                            } else {
+                              final uri = Uri.parse('tel:${c.customerPhone}');
+                              await launchUrl(uri);
+                            }
+                          } catch (_) {}
                         },
                         onLongPress: () {
                           HapticFeedback.mediumImpact();

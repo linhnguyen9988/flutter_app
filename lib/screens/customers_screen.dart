@@ -5,7 +5,6 @@ import '../models/live_comment.dart';
 import '../services/api_service.dart';
 import '../widgets/app_sidebar.dart';
 import '../widgets/page_filter_chip.dart';
-import '../widgets/phone_widget.dart';
 import 'customer_detail_screen.dart';
 
 class CustomersScreen extends StatefulWidget {
@@ -219,11 +218,15 @@ class CustomersScreenState extends State<CustomersScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (c.phone != null && c.phone!.isNotEmpty)
-            PhoneWidget(
-              phone: c.phone!,
-              style:
-                  TextStyle(color: AppTheme.textSubColor(isDark), fontSize: 12),
-              prefix: const Text('📱', style: TextStyle(fontSize: 12)),
+            Row(
+              children: [
+                const Text('📱', style: TextStyle(fontSize: 12)),
+                Text(
+                  c.phone!,
+                  style: TextStyle(
+                      color: AppTheme.textSubColor(isDark), fontSize: 12),
+                ),
+              ],
             ),
           if (c.label != null && c.label!.isNotEmpty)
             Text('🏷 ${c.label}',

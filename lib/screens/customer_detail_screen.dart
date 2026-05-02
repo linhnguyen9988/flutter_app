@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
+import 'dart:io' show Platform;
 import '../theme/app_theme.dart';
 import '../models/customer.dart';
 import '../models/live_comment.dart';
@@ -1480,8 +1481,15 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
     Future<void> callPhone() async {
       final phone = ctrl.text.trim();
       if (phone.isEmpty) return;
-      final uri = Uri.parse('tel:$phone');
-      if (await canLaunchUrl(uri)) await launchUrl(uri);
+      try {
+        if (Platform.isAndroid) {
+          const platform = MethodChannel('app/phone_call');
+          await platform.invokeMethod('call', {'number': phone});
+        } else {
+          final uri = Uri.parse('tel:$phone');
+          await launchUrl(uri);
+        }
+      } catch (_) {}
     }
 
     return GestureDetector(
