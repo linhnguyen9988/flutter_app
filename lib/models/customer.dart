@@ -59,4 +59,29 @@ class Customer {
 
   String get displayName => fbname ?? userid ?? 'Khách hàng';
   bool get isImportant => important == '1' || important == 'true';
+
+  Customer copyWith({
+    String? phone,
+    String? diachi,
+    String? note,
+    String? label,
+    String? tag,
+    String? important,
+  }) =>
+      Customer(
+        id: id,
+        userid: userid,
+        fbname: fbname,
+        phone: phone ?? this.phone,
+        diachi: diachi ?? this.diachi,
+        avalink: avalink,
+        label: label ?? this.label,
+        pageid: pageid,
+        note: note ?? this.note,
+        psid: psid,
+        tag: tag ?? this.tag,
+        joindate: joindate,
+        realfbid: realfbid,
+        important: important ?? this.important,
+      );
 }

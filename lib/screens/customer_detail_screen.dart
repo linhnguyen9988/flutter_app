@@ -52,7 +52,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
   late TextEditingController _addressCtrl;
   late TextEditingController _noteCtrl;
   String _selectedLabel = '';
-  late TextEditingController _tagCtrl;
 
   final _codCtrl = TextEditingController(text: '0');
   final _kgCtrl = TextEditingController(text: '1');
@@ -84,7 +83,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
     _addressCtrl = TextEditingController(text: _customer.diachi ?? '');
     _noteCtrl = TextEditingController(text: _customer.note ?? '');
     _selectedLabel = _customer.label ?? '';
-    _tagCtrl = TextEditingController(text: _customer.tag ?? '');
     _loadSavedAddresses();
     _loadRecentOrders();
     _loadLiveChots();
@@ -106,7 +104,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
     _phoneCtrl.dispose();
     _addressCtrl.dispose();
     _noteCtrl.dispose();
-    _tagCtrl.dispose();
     super.dispose();
   }
 
@@ -399,6 +396,7 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
                         builder: (_) => ChatScreen(
                           sender: _customer.userid!,
                           pageId: _customer.pageid ?? '',
+                          customer: _customer,
                           initialMessage: buildChotMessage(),
                           selectedLiveIds: widget.selectedLiveIds,
                           liveComments: widget.liveComments,
@@ -805,14 +803,24 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
         'diachi': _addressCtrl.text,
         'note': _noteCtrl.text,
         'label': _selectedLabel,
-        'tag': _tagCtrl.text,
         'important': _customer.important ?? '0',
         'userid': _customer.userid,
       });
       if (ok) {
-        setState(() => _editingFields.clear());
+        setState(() {
+          _editingFields.clear();
+          _customer = _customer.copyWith(
+            phone: _phoneCtrl.text,
+            diachi: _addressCtrl.text,
+            note: _noteCtrl.text,
+            label: _selectedLabel == 'Xóa nhãn' ? '' : _selectedLabel,
+            important: _customer.important ?? '0',
+          );
+        });
         if (!silent) _snack('Đã lưu thành công ✓', AppTheme.accent);
         _loadSavedAddresses();
+      } else {
+        if (!silent) _snack('Lưu thất bại, thử lại', Colors.red);
       }
     } catch (_) {
       _snack('Lỗi khi lưu', Colors.red);
@@ -847,7 +855,27 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Chi tiết khách hàng'),
+        title: Row(children: [
+          CircleAvatar(
+            radius: 17,
+            backgroundColor: AppTheme.surfaceColor(isDark),
+            backgroundImage: _customer.userid != null &&
+                    _customer.userid!.isNotEmpty
+                ? NetworkImage(
+                    'https://aodaigiabao.com/images/ava/${_customer.userid}.jpg')
+                : null,
+            onBackgroundImageError:
+                _customer.userid != null ? (_, __) {} : null,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              _customer.displayName,
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ]),
         actions: [
           _printing
               ? Padding(
@@ -903,52 +931,10 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-                child: Column(children: [
-              CircleAvatar(
-                radius: 40,
-                backgroundColor: AppTheme.surfaceColor(isDark),
-                backgroundImage: _customer.userid != null &&
-                        _customer.userid!.isNotEmpty
-                    ? NetworkImage(
-                        'https://aodaigiabao.com/images/ava/${_customer.userid}.jpg')
-                    : null,
-                onBackgroundImageError:
-                    _customer.userid != null ? (_, __) {} : null,
-                child: null,
-              ),
-              const SizedBox(height: 12),
-              Text(_customer.displayName,
-                  style: TextStyle(
-                      color: AppTheme.textColor(isDark),
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700)),
-              if (_selectedLabel.isNotEmpty) ...[
-                const SizedBox(height: 6),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: _labelColor(_selectedLabel).withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                        color:
-                            _labelColor(_selectedLabel).withValues(alpha: 0.4)),
-                  ),
-                  child: Text(_selectedLabel,
-                      style: TextStyle(
-                          color: _labelColor(_selectedLabel),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600)),
-                ),
-              ],
-            ])),
-            const SizedBox(height: 24),
             _sectionHeader('Liên hệ'),
             _infoCard(children: [
-              _editableField('Số điện thoại', _phoneCtrl, Icons.phone,
-                  fieldKey: 'phone'),
-              _editableField('Địa chỉ', _addressCtrl, Icons.location_on,
+              _editableField('SĐT', _phoneCtrl, Icons.phone, fieldKey: 'phone'),
+              _editableField('Địa Chỉ', _addressCtrl, Icons.location_on,
                   fieldKey: 'address', onSaved: _checkAddress),
               _buildLastMessageRow(),
             ]),
@@ -1100,67 +1086,80 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
                   ]),
             ),
             const SizedBox(height: 16),
-            _sectionHeader('Ghi chú'),
-            GestureDetector(
-              onDoubleTap: () => _startEdit('note'),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppTheme.cardColor(isDark),
-                  borderRadius: BorderRadius.circular(8),
-                  border: _isEditing('note')
-                      ? Border.all(
-                          color: AppTheme.primary.withValues(alpha: 0.4),
-                          width: 1)
-                      : null,
+            _sectionHeader('Ghi chú & Nhãn'),
+            _infoCard(children: [
+              _buildLabelField(),
+              Divider(
+                  height: 0,
+                  color: AppTheme.surfaceColor(isDark).withValues(alpha: 0.5),
+                  indent: 16,
+                  endIndent: 16),
+              GestureDetector(
+                onDoubleTap: () => _startEdit('note'),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(children: [
+                    Icon(Icons.notes,
+                        color: AppTheme.textSubColor(isDark), size: 18),
+                    const SizedBox(width: 5),
+                    SizedBox(
+                        width: 60,
+                        child: Text('Note',
+                            style: TextStyle(
+                                color: AppTheme.textSubColor(isDark),
+                                fontSize: 13))),
+                    Expanded(
+                      child: _isEditing('note')
+                          ? TextField(
+                              controller: _noteCtrl,
+                              maxLines: 4,
+                              autofocus: true,
+                              onTapOutside: (_) => _stopEdit('note'),
+                              style: TextStyle(
+                                  color: AppTheme.textColor(isDark),
+                                  fontSize: 13),
+                              decoration: InputDecoration(
+                                isDense: true,
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 6),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide(
+                                      color: AppTheme.surfaceColor(isDark)),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide(
+                                      color: AppTheme.surfaceColor(isDark)),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide(
+                                      color: AppTheme.primary, width: 1),
+                                ),
+                                suffixIcon: IconButton(
+                                  icon: const Icon(Icons.check,
+                                      color: AppTheme.accent, size: 18),
+                                  onPressed: () => _stopEdit('note'),
+                                ),
+                              ))
+                          : Text(
+                              _noteCtrl.text.isEmpty
+                                  ? '—  nhấn đúp để sửa'
+                                  : _noteCtrl.text,
+                              style: TextStyle(
+                                  color: _noteCtrl.text.isEmpty
+                                      ? AppTheme.textSubColor(isDark)
+                                          .withValues(alpha: 0.5)
+                                      : AppTheme.textColor(isDark),
+                                  fontSize: 13),
+                            ),
+                    ),
+                  ]),
                 ),
-                child: _isEditing('note')
-                    ? TextField(
-                        controller: _noteCtrl,
-                        maxLines: 4,
-                        autofocus: true,
-                        onTapOutside: (_) => _stopEdit('note'),
-                        style: TextStyle(
-                            color: AppTheme.textColor(isDark), fontSize: 14),
-                        decoration: InputDecoration(
-                          hintText: 'Thêm ghi chú...',
-                          hintStyle: TextStyle(
-                              color: AppTheme.textSubColor(isDark)
-                                  .withValues(alpha: 0.6)),
-                          contentPadding:
-                              const EdgeInsets.fromLTRB(12, 12, 36, 12),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none,
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none,
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none,
-                          ),
-                          suffixIcon: IconButton(
-                            icon: const Icon(Icons.check,
-                                color: AppTheme.accent, size: 18),
-                            onPressed: () => _stopEdit('note'),
-                          ),
-                        ))
-                    : Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Text(
-                          _noteCtrl.text.isEmpty
-                              ? 'Chưa có ghi chú  —  nhấn đúp để sửa'
-                              : _noteCtrl.text,
-                          style: TextStyle(
-                              color: _noteCtrl.text.isEmpty
-                                  ? AppTheme.textSubColor(isDark)
-                                      .withValues(alpha: 0.5)
-                                  : AppTheme.textColor(isDark),
-                              fontSize: 14),
-                        )),
               ),
-            ),
+            ]),
             const SizedBox(height: 16),
             _sectionHeader('Đơn hàng gần nhất'),
             if (_loadingOrders)
@@ -1261,12 +1260,6 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
                   }).toList(),
                 ),
               ),
-            const SizedBox(height: 16),
-            _sectionHeader('Phân loại'),
-            _infoCard(children: [
-              _buildLabelField(),
-              _editableField('Tag', _tagCtrl, Icons.tag),
-            ]),
             const SizedBox(height: 32),
           ],
         ),
@@ -1322,9 +1315,9 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(children: [
           Icon(Icons.label, color: AppTheme.textSubColor(isDark), size: 18),
-          const SizedBox(width: 12),
+          const SizedBox(width: 5),
           SizedBox(
-              width: 100,
+              width: 60,
               child: Text('Nhãn',
                   style: TextStyle(
                       color: AppTheme.textSubColor(isDark), fontSize: 13))),
@@ -1402,17 +1395,18 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
               MaterialPageRoute(
                   builder: (_) => ChatScreen(
                       sender: _customer.userid!,
-                      pageId: _customer.pageid ?? '')))
+                      pageId: _customer.pageid ?? '',
+                      customer: _customer)))
           : null,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Row(children: [
           Icon(Icons.chat_bubble_outline,
               color: AppTheme.textSubColor(isDark), size: 18),
-          const SizedBox(width: 12),
+          const SizedBox(width: 5),
           SizedBox(
-              width: 100,
-              child: Text('Tin nhắn',
+              width: 60,
+              child: Text('T. Nhắn',
                   style: TextStyle(
                       color: AppTheme.textSubColor(isDark), fontSize: 13))),
           Expanded(
@@ -1460,10 +1454,16 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
                 letterSpacing: 0.5)),
       );
 
-  Widget _infoCard({required List<Widget> children}) => Container(
+  Widget _infoCard({required List<Widget> children, bool editing = false}) =>
+      AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
         decoration: BoxDecoration(
             color: AppTheme.cardColor(isDark),
-            borderRadius: BorderRadius.circular(12)),
+            borderRadius: BorderRadius.circular(12),
+            border: editing
+                ? Border.all(
+                    color: AppTheme.primary.withValues(alpha: 0.5), width: 1)
+                : Border.all(color: Colors.transparent, width: 1)),
         child: Column(children: children),
       );
 
@@ -1506,9 +1506,9 @@ class _CustomerDetailScreenState extends State<CustomerDetailScreen>
                       ? AppTheme.accent
                       : AppTheme.textSubColor(isDark),
                   size: 18),
-              const SizedBox(width: 12),
+              const SizedBox(width: 5),
               SizedBox(
-                  width: 100,
+                  width: 60,
                   child: Text(label,
                       style: TextStyle(
                           color: isPhone && !editing && ctrl.text.isNotEmpty

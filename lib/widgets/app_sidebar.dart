@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:local_auth/local_auth.dart';
 import 'package:provider/provider.dart';
 import '../screens/notification_screen.dart';
+import '../screens/statistics_screen.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
@@ -114,6 +115,14 @@ class _AppSidebarState extends State<AppSidebar> {
       await auth.setBiometricEnabled(false);
       if (mounted) setState(() => _biometricEnabled = false);
     }
+  }
+
+  void _showStatistics() {
+    Navigator.pop(context);
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const StatisticsScreen()),
+    );
   }
 
   void _showChangePassword() {
@@ -228,6 +237,11 @@ class _AppSidebarState extends State<AppSidebar> {
                     ),
                   ),
                 const _ThemeSwitcherTile(),
+                _SidebarTile(
+                  icon: Icons.bar_chart_rounded,
+                  label: 'Thống kê',
+                  onTap: _showStatistics,
+                ),
                 _SidebarTile(
                   icon: Icons.notifications_outlined,
                   label: 'Thông báo',

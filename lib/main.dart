@@ -184,7 +184,8 @@ class _AppEntryState extends State<AppEntry> with WidgetsBindingObserver {
       await auth.tryAutoLogin();
       if (auth.isLoggedIn) {
         try {
-          await NotificationService.init();
+          await NotificationService.init()
+              .timeout(const Duration(seconds: 5));
         } catch (_) {}
       }
     } catch (_) {

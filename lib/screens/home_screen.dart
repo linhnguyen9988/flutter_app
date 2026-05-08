@@ -63,7 +63,14 @@ class _HomeScreenState extends State<HomeScreen>
     ).animate(CurvedAnimation(parent: _bannerAnim, curve: Curves.easeOut));
 
     _screens = [
-      ChotDonScreen(key: _chotDonKey),
+      ChotDonScreen(
+        key: _chotDonKey,
+        onSocketReconnect: () {
+          // Socket reconnect: chỉ reload MessagingScreen
+          // (ChotDonScreen tự reload comments bên trong nếu có live)
+          _messagingKey.currentState?.reload();
+        },
+      ),
       OrdersScreen(
         key: _ordersKey,
         getLiveIds: () => _chotDonKey.currentState?.selectedLiveIds ?? [],
@@ -111,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen>
     _hideBannerTimer?.cancel();
 
     if (online) {
-      _reloadAll();
+      _reloadOnReconnect();
       _hideBannerTimer = Timer(const Duration(seconds: 3), _hideBanner);
     }
   }
@@ -149,6 +156,17 @@ class _HomeScreenState extends State<HomeScreen>
         _pausedAt = null;
       }
     }
+  }
+
+  void _reloadOnReconnect() {
+    // Chỉ reload ChotDon nếu đang có live nào được chọn
+    final hasLive =
+        (_chotDonKey.currentState?.selectedLiveIds ?? []).isNotEmpty;
+    if (hasLive) {
+      _chotDonKey.currentState?.reload();
+    }
+    // Luôn reload tin nhắn
+    _messagingKey.currentState?.reload();
   }
 
   void _reloadAll() {

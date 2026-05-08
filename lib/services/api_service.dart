@@ -153,6 +153,7 @@ class ApiService {
   static Future<List<Customer>> getCustomers({
     String? pageId,
     String? search,
+    String? fromDate,
     int limit = 50,
     int offset = 0,
   }) async {
@@ -161,6 +162,7 @@ class ApiService {
       'offset': offset.toString(),
       if (pageId != null) 'pageId': pageId,
       if (search != null && search.isNotEmpty) 'search': search,
+      if (fromDate != null) 'fromDate': fromDate,
     };
     final uri =
         Uri.parse('$baseUrl/customers').replace(queryParameters: params);
@@ -174,6 +176,17 @@ class ApiService {
 
   static Future<Customer?> getCustomerById(int id) async {
     final uri = Uri.parse('$baseUrl/customers/$id');
+    final res = await http.get(uri, headers: _headers);
+    if (res.statusCode == 200) {
+      return Customer.fromJson(json.decode(utf8.decode(res.bodyBytes)));
+    }
+    return null;
+  }
+
+  /// Tìm khách theo Facebook UserID (dùng cho ChatScreen từ inbox)
+  static Future<Customer?> getCustomerByUserid(String userid) async {
+    if (userid.isEmpty) return null;
+    final uri = Uri.parse('$baseUrl/customers/by-userid/$userid');
     final res = await http.get(uri, headers: _headers);
     if (res.statusCode == 200) {
       return Customer.fromJson(json.decode(utf8.decode(res.bodyBytes)));
@@ -201,6 +214,36 @@ class ApiService {
     return orders;
   }
 
+  static Future<Map<String, dynamic>> getOrderStats({String? fromDate}) async {
+    final params = <String, String>{
+      if (fromDate != null) 'fromDate': fromDate,
+    };
+    final uri =
+        Uri.parse('$baseUrl/orders/stats').replace(queryParameters: params);
+    final res = await http.get(uri, headers: _headers);
+    if (res.statusCode == 200) {
+      return json.decode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+    }
+    throw Exception('Lỗi tải thống kê đơn hàng');
+  }
+
+  static Future<Map<String, dynamic>> getCustomerStats({
+    String? fromDate,
+    String? pageId,
+  }) async {
+    final params = <String, String>{
+      if (fromDate != null) 'fromDate': fromDate,
+      if (pageId != null) 'pageId': pageId,
+    };
+    final uri =
+        Uri.parse('$baseUrl/customers/stats').replace(queryParameters: params);
+    final res = await http.get(uri, headers: _headers);
+    if (res.statusCode == 200) {
+      return json.decode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+    }
+    throw Exception('Lỗi tải thống kê khách hàng');
+  }
+
   static Future<List<Order>> getUserOrders(String userid) async {
     final uri = Uri.parse('https://aodaigiabao.com/getuserorder');
     final res = await http.post(
@@ -219,6 +262,7 @@ class ApiService {
   static Future<List<Order>> getOrders({
     String? status,
     String? search,
+    String? fromDate,
     int limit = 50,
     int offset = 0,
   }) async {
@@ -227,6 +271,7 @@ class ApiService {
       'offset': offset.toString(),
       if (status != null) 'status': status,
       if (search != null && search.isNotEmpty) 'search': search,
+      if (fromDate != null) 'fromDate': fromDate,
     };
     final uri = Uri.parse('$baseUrl/orders').replace(queryParameters: params);
     final res = await http.get(uri, headers: _headers);

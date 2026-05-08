@@ -15,7 +15,9 @@ const String _socketUrl = 'https://aodaigiabao.com';
 const String _avaBase = 'https://aodaigiabao.com/images/ava';
 
 class ChotDonScreen extends StatefulWidget {
-  const ChotDonScreen({super.key});
+  final VoidCallback? onSocketReconnect;
+
+  const ChotDonScreen({super.key, this.onSocketReconnect});
 
   @override
   State<ChotDonScreen> createState() => ChotDonScreenState();
@@ -111,6 +113,12 @@ class ChotDonScreenState extends State<ChotDonScreen>
         for (final live in _selectedLives) {
           _socket!.emit('join-live-stream', live['id']);
         }
+        // Reload lại comments nếu đang có live để bù miss trong lúc mất kết nối
+        if (_selectedLives.isNotEmpty) {
+          _reloadAllComments();
+        }
+        // Báo HomeScreen để reload MessagingScreen
+        widget.onSocketReconnect?.call();
       }
     });
 

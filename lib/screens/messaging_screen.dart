@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../models/live_comment.dart';
 import '../services/api_service.dart';
 import '../widgets/app_sidebar.dart';
+import '../models/customer.dart';
 import 'chat_screen.dart';
 
 const String _mainBackendUrl = 'https://aodaigiabao.com';
@@ -88,6 +89,13 @@ class MessagingScreenState extends State<MessagingScreen> {
       if (mounted) setState(() => _socketConnected = false);
     });
 
+    _socket!.onReconnect((_) {
+      if (mounted) {
+        // Reload lại danh sách tin nhắn để bù miss trong lúc mất kết nối
+        _loadMessages();
+      }
+    });
+
     _socket!.on('new-message', (data) {
       if (!mounted) return;
       final d = Map<String, dynamic>.from(data);
@@ -160,6 +168,7 @@ class MessagingScreenState extends State<MessagingScreen> {
         existing['sender'] = senderId;
         existing['recipient'] = recipientId;
         existing['pageid'] = pageId;
+        if (d['khid'] != null) existing['khid'] = d['khid'];
         _conversations.removeAt(idx);
         _conversations.insert(0, existing);
       } else {
@@ -177,6 +186,7 @@ class MessagingScreenState extends State<MessagingScreen> {
           'ten_khach': fbname.isNotEmpty ? fbname : khachUserId,
           'label': label,
           'isNew': isNewFlag,
+          'khid': d['khid'],
         });
       }
     });
@@ -399,8 +409,7 @@ class MessagingScreenState extends State<MessagingScreen> {
                         controller: _scrollCtrl,
                         itemCount: _conversations.length,
                         separatorBuilder: (_, __) => Divider(
-                            height: 0,
-                            color: AppTheme.dividerColor(isDark)),
+                            height: 0, color: AppTheme.dividerColor(isDark)),
                         itemBuilder: (_, i) {
                           final c = _conversations[i];
                           final khachId = _khachUserId(c);
@@ -429,6 +438,8 @@ class MessagingScreenState extends State<MessagingScreen> {
         final current = idx >= 0 ? _conversations[idx] : c;
         setState(() => current['isNew'] = false);
         _notifyUnread();
+        final khid = current['khid'];
+        final customerId = khid != null ? int.tryParse(khid.toString()) : null;
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -437,6 +448,7 @@ class MessagingScreenState extends State<MessagingScreen> {
                     pageId: _pageId(current),
                     customerName: _displayName(current),
                     avatarUrl: _avatarUrl(current),
+                    customerId: customerId,
                     selectedLiveIds: widget.getLiveIds?.call() ?? const [],
                     liveComments: widget.getLiveComments?.call() ?? const [],
                   )),
@@ -462,7 +474,8 @@ class MessagingScreenState extends State<MessagingScreen> {
                     decoration: BoxDecoration(
                       color: labelColor,
                       shape: BoxShape.circle,
-                      border: Border.all(color: AppTheme.bgColor(isDark), width: 1.5),
+                      border: Border.all(
+                          color: AppTheme.bgColor(isDark), width: 1.5),
                     ),
                   ),
                 ),
@@ -479,8 +492,9 @@ class MessagingScreenState extends State<MessagingScreen> {
                           child: Text(
                             name,
                             style: TextStyle(
-                              color:
-                                  isNew ? AppTheme.textColor(isDark) : AppTheme.textColor(isDark),
+                              color: isNew
+                                  ? AppTheme.textColor(isDark)
+                                  : AppTheme.textColor(isDark),
                               fontWeight:
                                   isNew ? FontWeight.w700 : FontWeight.w500,
                               fontSize: 15,
@@ -511,8 +525,9 @@ class MessagingScreenState extends State<MessagingScreen> {
                     Text(
                       _formatTime(c['timestamp'] ?? c['time']),
                       style: TextStyle(
-                        color:
-                            isNew ? AppTheme.primary : AppTheme.textSubColor(isDark),
+                        color: isNew
+                            ? AppTheme.primary
+                            : AppTheme.textSubColor(isDark),
                         fontSize: 11,
                         fontWeight: isNew ? FontWeight.w600 : FontWeight.w400,
                       ),

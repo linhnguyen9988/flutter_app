@@ -16,11 +16,12 @@ class ChatScreen extends StatefulWidget {
   final String sender;
   final String pageId;
   final String? customerName;
-  final String? customerId;
+  final int? customerId;
   final String? initialMessage;
   final String? avatarUrl;
   final List<String> selectedLiveIds;
   final List<LiveComment> liveComments;
+  final Customer? customer;
 
   const ChatScreen({
     super.key,
@@ -32,6 +33,7 @@ class ChatScreen extends StatefulWidget {
     this.avatarUrl,
     this.selectedLiveIds = const [],
     this.liveComments = const [],
+    this.customer,
   });
 
   @override
@@ -65,7 +67,7 @@ class _ChatScreenState extends State<ChatScreen> {
   String get _fbPicture => widget.avatarUrl ?? '';
 
   String get _displayName =>
-      _customer?.fbname ?? widget.customerName ?? widget.sender;
+      _customer?.displayName ?? widget.customerName ?? widget.sender;
 
   String get _latestOrderInfo {
     final o = _latestOrder;
@@ -94,6 +96,9 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.customer != null) {
+      _customer = widget.customer;
+    }
     if (widget.initialMessage != null && widget.initialMessage!.isNotEmpty) {
       _replyCtrl.text = widget.initialMessage!;
     }
@@ -195,11 +200,16 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _loadCustomer() async {
+    if (_customer != null) return;
     try {
-      final list = await ApiService.getCustomers(search: widget.sender);
-      if (list.isNotEmpty && mounted) {
-        setState(() => _customer = list.first);
+      Customer? c;
+      // Ưu tiên dùng DB id — chính xác và nhanh
+      if (widget.customerId != null && widget.customerId! > 0) {
+        c = await ApiService.getCustomerById(widget.customerId!);
       }
+      // Fallback: tìm theo Facebook UserID
+      c ??= await ApiService.getCustomerByUserid(widget.sender);
+      if (c != null && mounted) setState(() => _customer = c);
     } catch (_) {}
   }
 
@@ -483,7 +493,7 @@ class _ChatScreenState extends State<ChatScreen> {
           IconButton(
             icon: const Icon(Icons.person_outline),
             tooltip: 'Chi tiết khách hàng',
-            onPressed: () {
+            onPressed: () async {
               if (_customer != null) {
                 Navigator.push(
                   context,
@@ -496,11 +506,33 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                 );
               } else {
+                // Chờ load xong rồi navigate
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Đang tải thông tin khách hàng...'),
+                    duration: Duration(seconds: 5),
                   ),
                 );
+                final c = await ApiService.getCustomerByUserid(widget.sender);
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                if (c != null && mounted) {
+                  setState(() => _customer = c);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CustomerDetailScreen(
+                        customer: c,
+                        selectedLiveIds: widget.selectedLiveIds,
+                        liveComments: widget.liveComments,
+                      ),
+                    ),
+                  );
+                } else if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text('Không tìm thấy thông tin khách hàng')),
+                  );
+                }
               }
             },
           ),
