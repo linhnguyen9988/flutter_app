@@ -7,7 +7,6 @@ import '../theme/app_theme.dart';
 import '../models/live_comment.dart';
 import '../services/api_service.dart';
 import '../widgets/app_sidebar.dart';
-import '../models/customer.dart';
 import 'chat_screen.dart';
 
 const String _mainBackendUrl = 'https://aodaigiabao.com';

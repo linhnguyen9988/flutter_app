@@ -4,6 +4,7 @@ import '../theme/app_theme.dart';
 import 'chat_screen.dart';
 import '../models/order.dart';
 import '../services/api_service.dart';
+import 'customer_detail_screen.dart';
 import 'order_timeline_screen.dart';
 import '../services/reload_aware_mixin.dart';
 
@@ -24,6 +25,39 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
   bool _loadingOrder = false;
   String _pageId = '';
   String _lastNote = '';
+
+  Future<void> _openCustomer() async {
+    final userid = _order.userid;
+    if (userid == null || userid.isEmpty) return;
+    try {
+      final customer = await ApiService.getCustomerByUserid(userid);
+      if (!mounted) return;
+      if (customer == null) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Không tìm thấy khách hàng'),
+          duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ));
+        return;
+      }
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => CustomerDetailScreen(
+                    customer: customer,
+                    selectedLiveIds: const [],
+                    liveComments: const [],
+                  )));
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Lỗi: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    }
+  }
 
   @override
   void onReload() => _loadOrderByRealId();
@@ -190,6 +224,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                     ),
                   )),
             ),
+          if (_order.userid != null && _order.userid!.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.person_outline),
+              tooltip: 'Chi tiết khách hàng',
+              onPressed: _openCustomer,
+            ),
           if (_saving)
             Padding(
               padding: const EdgeInsets.all(14),
@@ -313,7 +353,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                       ),
                       child: Text(_lastNote,
                           style: TextStyle(
-                              color: AppTheme.textSubColor(isDark), fontSize: 13)),
+                              color: AppTheme.textSubColor(isDark),
+                              fontSize: 13)),
                     ),
                     const SizedBox(height: 20),
                   ],
@@ -371,7 +412,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
 
   Widget _infoCard({required List<Widget> children}) => Container(
         decoration: BoxDecoration(
-            color: AppTheme.cardColor(isDark), borderRadius: BorderRadius.circular(12)),
+            color: AppTheme.cardColor(isDark),
+            borderRadius: BorderRadius.circular(12)),
         child: Column(
             crossAxisAlignment: CrossAxisAlignment.start, children: children),
       );
@@ -392,8 +434,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
           SizedBox(
               width: 110,
               child: Text(label,
-                  style:
-                      TextStyle(color: AppTheme.textSubColor(isDark), fontSize: 13))),
+                  style: TextStyle(
+                      color: AppTheme.textSubColor(isDark), fontSize: 13))),
           Expanded(
             child: Text(
               value,

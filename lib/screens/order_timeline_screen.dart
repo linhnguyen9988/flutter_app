@@ -6,6 +6,7 @@ import '../models/live_comment.dart';
 import '../services/api_service.dart';
 import '../widgets/phone_widget.dart';
 import 'customer_detail_screen.dart';
+import 'order_detail_screen.dart';
 
 class OrderTimelineScreen extends StatefulWidget {
   final Order order;
@@ -38,17 +39,33 @@ class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
     final userid = widget.order.userid;
     if (userid == null || userid.isEmpty) return;
     try {
-      final list = await ApiService.getCustomers(search: userid, limit: 1);
-      if (!mounted || list.isEmpty) return;
+      final customer = await ApiService.getCustomerByUserid(userid);
+      if (!mounted) return;
+      if (customer == null) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Không tìm thấy khách hàng'),
+          duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ));
+        return;
+      }
       Navigator.push(
           context,
           MaterialPageRoute(
               builder: (_) => CustomerDetailScreen(
-                    customer: list.first,
+                    customer: customer,
                     selectedLiveIds: widget.getLiveIds?.call() ?? [],
                     liveComments: widget.getLiveComments?.call() ?? [],
                   )));
-    } catch (_) {}
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Lỗi: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    }
   }
 
   Future<void> _loadLogs() async {
@@ -101,12 +118,21 @@ class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
                   ));
                 },
                 child: Text(widget.order.realorderid!,
-                    style:
-                        TextStyle(fontSize: 12, color: AppTheme.textSubColor(isDark))),
+                    style: TextStyle(
+                        fontSize: 12, color: AppTheme.textSubColor(isDark))),
               ),
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.receipt_long_outlined),
+            tooltip: 'Chi tiết đơn hàng',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => OrderDetailScreen(order: widget.order)),
+            ),
+          ),
           if (widget.order.userid?.isNotEmpty == true)
             IconButton(
               icon: const Icon(Icons.person_outline),
@@ -116,7 +142,14 @@ class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
           IconButton(icon: const Icon(Icons.refresh), onPressed: _loadLogs),
         ],
       ),
-      body: _loading
+      body: GestureDetector(
+        onHorizontalDragEnd: (details) {
+          final v = details.primaryVelocity ?? 0;
+          if (v > 200 || v < -200) {
+            Navigator.pop(context);
+          }
+        },
+        child: _loading
           ? const Center(
               child: CircularProgressIndicator(color: AppTheme.primary))
           : _logs.isEmpty
@@ -139,6 +172,7 @@ class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
                     itemBuilder: (_, i) => _buildTimelineItem(i),
                   ),
                 ),
+      ),
     );
   }
 
@@ -195,7 +229,8 @@ class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
                 ),
                 if (!isLast)
                   Expanded(
-                    child: Container(width: 2, color: AppTheme.surfaceColor(isDark)),
+                    child: Container(
+                        width: 2, color: AppTheme.surfaceColor(isDark)),
                   )
                 else
                   const SizedBox(height: 8),
@@ -235,7 +270,8 @@ class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
                     if (date.isNotEmpty)
                       Text(date,
                           style: TextStyle(
-                              color: AppTheme.textSubColor(isDark), fontSize: 12)),
+                              color: AppTheme.textSubColor(isDark),
+                              fontSize: 12)),
                     if (location.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Row(children: [
@@ -283,8 +319,8 @@ class _OrderTimelineScreenState extends State<OrderTimelineScreen> {
                       const SizedBox(height: 4),
                       Text(note,
                           style: TextStyle(
-                              color:
-                                  AppTheme.textSubColor(isDark).withValues(alpha: 0.7),
+                              color: AppTheme.textSubColor(isDark)
+                                  .withValues(alpha: 0.7),
                               fontSize: 11)),
                     ],
                   ],

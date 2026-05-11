@@ -214,9 +214,13 @@ class ApiService {
     return orders;
   }
 
-  static Future<Map<String, dynamic>> getOrderStats({String? fromDate}) async {
+  static Future<Map<String, dynamic>> getOrderStats({
+    String? fromDate,
+    String? dateMode,
+  }) async {
     final params = <String, String>{
       if (fromDate != null) 'fromDate': fromDate,
+      if (dateMode != null) 'dateMode': dateMode,
     };
     final uri =
         Uri.parse('$baseUrl/orders/stats').replace(queryParameters: params);

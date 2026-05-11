@@ -5,6 +5,7 @@ import '../models/order.dart';
 import '../models/live_comment.dart';
 import '../services/api_service.dart';
 import '../widgets/app_sidebar.dart';
+import 'order_detail_screen.dart';
 import 'order_timeline_screen.dart';
 
 class OrdersScreen extends StatefulWidget {
@@ -387,10 +388,8 @@ class OrdersScreenState extends State<OrdersScreen> {
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (_) => OrderTimelineScreen(
+            builder: (_) => OrderDetailScreen(
                   order: order,
-                  getLiveIds: widget.getLiveIds,
-                  getLiveComments: widget.getLiveComments,
                 )),
       ),
       child: Container(
@@ -507,10 +506,47 @@ class OrdersScreenState extends State<OrdersScreen> {
       ),
     );
 
-    if (!canCancel) return tile;
+    // Swipe phải → mở hành trình đơn (luôn có)
+    final tileWithSwipeRight = Dismissible(
+      key: ValueKey('order_timeline_${order.id}'),
+      direction: DismissDirection.startToEnd,
+      confirmDismiss: (_) async {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => OrderTimelineScreen(
+                    order: order,
+                    getLiveIds: widget.getLiveIds,
+                    getLiveComments: widget.getLiveComments,
+                  )),
+        );
+        return false;
+      },
+      background: Container(
+        color: AppTheme.primary,
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.only(left: 20),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.timeline, color: Colors.white, size: 28),
+            SizedBox(height: 4),
+            Text('Hành trình',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600)),
+          ],
+        ),
+      ),
+      child: tile,
+    );
 
+    if (!canCancel) return tileWithSwipeRight;
+
+    // Swipe trái → hủy đơn (chỉ khi canCancel)
     return Dismissible(
-      key: ValueKey('order_${order.id}'),
+      key: ValueKey('order_cancel_${order.id}'),
       direction: DismissDirection.endToStart,
       confirmDismiss: (_) async {
         await _cancelOrder(order);
@@ -533,7 +569,7 @@ class OrdersScreenState extends State<OrdersScreen> {
           ],
         ),
       ),
-      child: tile,
+      child: tileWithSwipeRight,
     );
   }
 }

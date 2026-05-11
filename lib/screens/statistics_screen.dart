@@ -17,6 +17,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   bool _loading = false;
   String? _error;
 
+  // Switch: false = ngày tạo, true = ngày giao (last_update)
+  bool _useUpdatedDate = false;
+
   // Customer stats
   int _totalCustomers = 0;
   int _customersWithPhone = 0;
@@ -79,7 +82,10 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Future<void> _loadOrders() async {
-    final data = await ApiService.getOrderStats(fromDate: _fromDateStr);
+    final data = await ApiService.getOrderStats(
+      fromDate: _fromDateStr,
+      dateMode: _useUpdatedDate ? 'updated' : 'created',
+    );
     final List byStatus = data['byStatus'] as List? ?? [];
     final Map<int, _StatusStat> stats = {};
     for (final s in byStatus) {
@@ -110,7 +116,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       if (i > 0 && (str.length - i) % 3 == 0) buf.write('.');
       buf.write(str[i]);
     }
-    return '${amount < 0 ? '-' : ''}$bufđ';
+    return '${amount < 0 ? '-' : ''}${buf}đ';
   }
 
   @override
@@ -234,11 +240,70 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                             const SizedBox(height: 24),
 
                             // ── Đơn hàng ──
-                            _SectionHeader(
-                                label: 'Đơn hàng',
-                                icon: Icons.receipt_long_outlined,
-                                color: const Color(0xFF9C27B0),
-                                isDark: isDark),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _SectionHeader(
+                                    label: 'Đơn hàng',
+                                    icon: Icons.receipt_long_outlined,
+                                    color: const Color(0xFF9C27B0),
+                                    isDark: isDark,
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () {
+                                    setState(() =>
+                                        _useUpdatedDate = !_useUpdatedDate);
+                                    _loadOrders();
+                                  },
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: _useUpdatedDate
+                                          ? AppTheme.accent
+                                              .withValues(alpha: 0.15)
+                                          : AppTheme.surfaceColor(isDark),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: _useUpdatedDate
+                                            ? AppTheme.accent
+                                            : AppTheme.dividerColor(isDark),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          _useUpdatedDate
+                                              ? Icons.local_shipping_outlined
+                                              : Icons.add_circle_outline,
+                                          size: 13,
+                                          color: _useUpdatedDate
+                                              ? AppTheme.accent
+                                              : AppTheme.primary,
+                                        ),
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          _useUpdatedDate
+                                              ? 'Ngày giao'
+                                              : 'Ngày tạo',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: _useUpdatedDate
+                                                ? AppTheme.accent
+                                                : AppTheme.primary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                             const SizedBox(height: 10),
                             IntrinsicHeight(
                                 child: Row(
@@ -278,13 +343,43 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                     Padding(
                                       padding: const EdgeInsets.fromLTRB(
                                           16, 14, 16, 8),
-                                      child: Text(
-                                        'Chi tiết theo trạng thái',
-                                        style: TextStyle(
-                                          color: textColor,
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 14,
-                                        ),
+                                      child: Row(
+                                        children: [
+                                          Text(
+                                            'Chi tiết theo trạng thái',
+                                            style: TextStyle(
+                                              color: textColor,
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 7, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: _useUpdatedDate
+                                                  ? AppTheme.accent
+                                                      .withValues(alpha: 0.12)
+                                                  : AppTheme.primary
+                                                      .withValues(alpha: 0.12),
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                            ),
+                                            child: Text(
+                                              _useUpdatedDate
+                                                  ? 'theo ngày giao'
+                                                  : 'theo ngày tạo',
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w600,
+                                                color: _useUpdatedDate
+                                                    ? AppTheme.accent
+                                                    : AppTheme.primary,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                     ..._buildStatusRows(textColor, subColor),
